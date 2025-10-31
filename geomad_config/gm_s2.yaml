@@ -1,0 +1,29 @@
+plugin: gm-s2
+plugin_config:
+  resampling: nearest
+  cloud_filters: {"cloud shadows":[["dilation", 5]], "cloud medium probability":[["opening", 5], ["dilation", 5]], "cloud high probability":[["opening", 5], ["dilation", 5]], "thin cirrus":[["dilation", 5]]}
+  bands: ["blue", "red", "green", "nir", "swir16", "swir22"]
+  rgb_bands: ["red", "green", "blue"]
+  work_chunks: [100,100]
+product:
+  name: gm_s2
+  short_name: gm_s2
+  version: 0.0.1
+  product_family: geomedian
+  region_code_format: "x{x:03d}y{y:03d}"
+max_processing_time: 3600
+job_queue_max_lease: 300
+renew_safety_margin: 60
+future_poll_interval: 2
+s3_acl: public-read
+# Generic product attributes
+cog_opts:
+  zlevel: 9
+  overrides:
+    # If you're making an RGBA image, compress better
+    rgba:
+      compress: JPEG
+      jpeg_quality: 90
+    # If you're writing a categorical raster, do overview resampling with nearest or mode
+    qa:
+      overview_resampling: nearest
