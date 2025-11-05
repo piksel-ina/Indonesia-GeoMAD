@@ -24,6 +24,3 @@ cog_opts:
     rgba:
       compress: JPEG
       jpeg_quality: 90
-    # If you're writing a categorical raster, do overview resampling with nearest or mode
-    qa:
-      overview_resampling: nearest
