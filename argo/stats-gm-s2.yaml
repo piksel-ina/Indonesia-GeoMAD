@@ -2,30 +2,25 @@ kind: Workflow
 
 metadata:
   generateName: stats-s2-geomad-annual-
-  namespace: piksel-argo # 
+  namespace: argo-workflows
 
 spec:
   entrypoint: workflow-entrypoint
-  serviceAccountName: piksel-sa-argo # 
+  serviceAccountName: argo-workflows-executor
   artifactGC:
     strategy: OnWorkflowDeletion
     forceFinalizerRemoval: true
   nodeSelector:
-    nodegroup: data_pipelines # 
-  tolerations:
-    - key: dedicated
-      operator: Equal
-      effect: NoSchedule
-      value: data_pipelines # 
-  parallelism: 10 # 
+    karpenter.sh/capacity-type: "spot"
+  parallelism: 10
   arguments:
     parameters:
       - name: image-name
-        value: "ghcr.io/opendatacube/odc-stats" # The Docker image
+        value: "ghcr.io/opendatacube/odc-stats"
       - name: image-tag
-        value: "latest" # The Docker image and code version
+        value: "latest"
       - name: version
-        value: "0.0.1" # The version of the data product being made
+        value: "0.0.1"
       - name: input-product
         value: "s2_l2a"
       - name: frequency
@@ -33,13 +28,13 @@ spec:
       - name: grid
         value: "ESRI:54034;10;5000"
       - name: year
-        value: "2024" # The year to process
+        value: "2024"
       - name: output-product-name
         value: gm_s2
       - name: output-bucket
-        value: s3_bucket # The bucket where the data will be stored
+        value: piksel-staging-public-data
       - name: output-path
-        value: gm_s2 # The prefix of the path where the data will be stored
+        value: gm_s2
       - name: output-resolution
         value: "10"
       - name: config
@@ -70,60 +65,55 @@ spec:
             arguments:
               parameters:
                 - name: frequency
-                  value: "{{ workflow.parameters.frequency }}"
+                  value: "{{workflow.parameters.frequency}}"
                 - name: grid
-                  value: "{{ workflow.parameters.grid }}"
+                  value: "{{workflow.parameters.grid}}"
                 - name: year
-                  value: "{{ workflow.parameters.year }}"
+                  value: "{{workflow.parameters.year}}"
                 - name: input-product
-                  value: "{{ workflow.parameters.input-product }}"
-                - name: version
-                  value: "{{ workflow.parameters.version }}"
+                  value: "{{workflow.parameters.input-product}}"
 
           - name: fanout-db
             depends: generate-db.Succeeded
             template: fanout-db
             arguments:
-              parameters:
-                - name: version
-                  value: "{{ workflow.parameters.version }}"
+              artifacts:
+                - name: db
+                  from: "{{tasks.generate-db.outputs.artifacts.db}}"
 
-          - name: process-id
+          - name: process-tile
             depends: fanout-db.Succeeded
             template: process
             arguments:
               parameters:
                 - name: tile-id
-                  value: "{{ item }}"
-                - name: version
-                  value: "{{ workflow.parameters.version }}"
+                  value: "{{item}}"
                 - name: output-bucket
-                  value: "{{ workflow.parameters.output-bucket }}"
+                  value: "{{workflow.parameters.output-bucket}}"
                 - name: output-path
-                  value: "{{ workflow.parameters.output-path }}"
+                  value: "{{workflow.parameters.output-path}}"
                 - name: output-resolution
-                  value: "{{ workflow.parameters.output-resolution }}"
+                  value: "{{workflow.parameters.output-resolution}}"
                 - name: config
-                  value: "{{ workflow.parameters.config }}"
-            withParam: "{{ tasks.fanout-db.outputs.result }}"
+                  value: "{{workflow.parameters.config}}"
+              artifacts:
+                - name: db
+                  from: "{{tasks.generate-db.outputs.artifacts.db}}"
+            withParam: "{{tasks.fanout-db.outputs.result}}"
 
     - name: generate-db
       inputs:
         parameters:
           - name: frequency
           - name: grid
+          - name: year
           - name: input-product
-          - name: version
       outputs:
         artifacts:
           - name: db
             path: /tmp/job.db
-            s3:
-              endpoint: s3.amazonaws.com
-              key: "{{workflow.parameters.output-path}}/{{workflow.parameters.version}}/job.db.tgz"
-              bucket: "{{workflow.parameters.output-bucket}}"
       container:
-        image: "{{ workflow.parameters.image-name }}:{{ workflow.parameters.image-tag }}"
+        image: "{{workflow.parameters.image-name}}:{{workflow.parameters.image-tag}}"
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -131,25 +121,43 @@ spec:
             cpu: 1.0
         env:
           - name: DB_HOSTNAME
-            valueFrom:
-              secretKeyRef:
-                name: piksel-user-db
-                key: database-reader-endpoint
+            value: "pg-proxy-service.database.svc.cluster.local"
           - name: DB_USERNAME
             valueFrom:
               secretKeyRef:
-                name: piksel-user-db
-                key: db-user-username
+                name: odc
+                key: username
           - name: DB_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: piksel-user-db
-                key: db-user-password
+                name: odc
+                key: password
           - name: DB_DATABASE
             valueFrom:
               secretKeyRef:
-                name: piksel-user-db
-                key: database-name
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_DB_HOSTNAME
+            value: "pg-proxy-service.database.svc.cluster.local"
+          - name: ODC_DEFAULT_DB_PORT
+            value: "6432"
+          - name: ODC_DEFAULT_DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: password
+          - name: ODC_DEFAULT_DB_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_INDEX_DRIVER
+            value: "postgis"
         command: ["/bin/bash"]
         args:
           - "-c"
@@ -160,27 +168,23 @@ spec:
 
             echo "Preparing DB..."
             odc-stats save-tasks \
-            --frequency="{{inputs.parameters.frequency}}" \
-            --grid="{{inputs.parameters.grid}}" \
-            --year="{{inputs.parameters.year}}" \
-            --input-products={{inputs.parameters.input-product}} \
-            job.db
+              --frequency="{{inputs.parameters.frequency}}" \
+              --grid="{{inputs.parameters.grid}}" \
+              --year="{{inputs.parameters.year}}" \
+              --input-products={{inputs.parameters.input-product}} \
+              job.db
 
             echo "Done"
 
     - name: fanout-db
       inputs:
-        parameters:
-          - name: version
         artifacts:
           - name: db
             path: /tmp/job.db
-            s3:
-              endpoint: s3.amazonaws.com
-              key: "{{workflow.parameters.output-path}}/{{workflow.parameters.version}}/job.db.tgz"
-              bucket: "{{workflow.parameters.output-bucket}}"
+
       script:
-        image: "{{ workflow.parameters.image-name }}:{{ workflow.parameters.image-tag }}"
+        image: "{{workflow.parameters.image-name}}:{{workflow.parameters.image-tag}}"
+        imagePullPolicy: IfNotPresent
         command: [python]
         source: |
           import json
@@ -193,7 +197,9 @@ spec:
           tiles = []
 
           for period, ix, iy in tasks:
-            print(f"{period}/{ix:+04d}/{iy:+04d}")
+            tile_id = f"{period}/{ix:+04d}/{iy:+04d}"
+            print(f"Found tile: {tile_id}")
+            tiles.append(tile_id)
 
           json.dump(tiles, sys.stdout)
 
@@ -201,7 +207,6 @@ spec:
       inputs:
         parameters:
           - name: tile-id
-          - name: version
           - name: output-bucket
           - name: output-path
           - name: output-resolution
@@ -209,30 +214,36 @@ spec:
         artifacts:
           - name: db
             path: /tmp/job.db
-            s3:
-              endpoint: s3.amazonaws.com
-              key: "{{workflow.parameters.output-path}}/{{workflow.parameters.version}}/job.db.tgz"
-              bucket: "{{workflow.parameters.output-bucket}}"
+
       container:
-        image: "{{ workflow.parameters.image-name }}:{{ workflow.parameters.image-tag }}"
+        image: "{{workflow.parameters.image-name}}:{{workflow.parameters.image-tag}}"
         imagePullPolicy: IfNotPresent
         resources:
           requests:
             memory: 150Gi
             cpu: 12
           limits:
-            cpu: 16
+            cpu: 12
             memory: 160Gi
+        env:
+          - name: AWS_DEFAULT_REGION
+            value: "ap-southeast-3"
         command: ["/bin/bash"]
         args:
           - "-c"
           - |
+            set -ex
+
+            echo "Processing tile: {{inputs.parameters.tile-id}}"
+
             odc-stats run \
               --apply_eodatasets3 \
               --config="{{inputs.parameters.config}}" \
-              --threads="16" \
+              --threads="12" \
               --resolution="{{inputs.parameters.output-resolution}}" \
-              --memory-limit="160GB" \
+              --memory-limit="160Gi" \
               --location="s3://{{inputs.parameters.output-bucket}}/{{inputs.parameters.output-path}}/{{workflow.parameters.version}}/" \
               /tmp/job.db \
-              {{ inputs.parameters.tile-id }}
+              {{inputs.parameters.tile-id}}
+
+            echo "Completed tile: {{inputs.parameters.tile-id}}"
