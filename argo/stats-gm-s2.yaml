@@ -57,7 +57,17 @@ spec:
             region_code_format: "x{x:03d}y{y:03d}"
           plugin_config:
             resampling: nearest
-            cloud_filters: {"cloud shadows":[["dilation", 5]], "cloud medium probability":[["opening", 5], ["dilation", 5]], "cloud high probability":[["opening", 5], ["dilation", 5]], "thin cirrus":[["dilation", 5]]}
+            cloud_filters: |
+              cloud shadows:
+                - [dilation, 5]
+              cloud medium probability:
+                - [opening, 5]
+                - [dilation, 5]
+              cloud high probability:
+                - [opening, 5]
+                - [dilation, 5]
+              thin cirrus:
+                - [dilation, 5]
             bands: ["blue", "red", "green", "nir", "swir16", "swir22"]
             rgb_bands: ["red", "green", "blue"]
             work_chunks: [100,100]
@@ -179,7 +189,7 @@ spec:
               --frequency="{{inputs.parameters.frequency}}" \
               --grid="{{inputs.parameters.grid}}" \
               --year="{{inputs.parameters.year}}" \
-              --input-products={{inputs.parameters.input-product}} \
+              --input-products="{{inputs.parameters.input-product}}" \
               job.db
 
             echo "Done"
