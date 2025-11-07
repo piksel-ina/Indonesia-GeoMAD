@@ -7,12 +7,20 @@ metadata:
 spec:
   entrypoint: workflow-entrypoint
   serviceAccountName: argo-workflows-executor
+  podGC:
+    strategy: OnPodSuccess
+  ttlStrategy:
+    secondsAfterSuccess: 30
+    secondsAfterFailure: 300
   artifactGC:
     strategy: OnWorkflowDeletion
     forceFinalizerRemoval: true
   nodeSelector:
     karpenter.sh/capacity-type: "spot"
-  parallelism: 10
+  podMetadata:
+    annotations:
+      karpenter.sh/do-not-disrupt: "true"
+  parallelism: 1
   arguments:
     parameters:
       - name: image-name
@@ -185,6 +193,10 @@ spec:
       script:
         image: "{{workflow.parameters.image-name}}:{{workflow.parameters.image-tag}}"
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 1.0
         command: [python]
         source: |
           import json
@@ -198,7 +210,6 @@ spec:
 
           for period, ix, iy in tasks:
             tile_id = f"{period}/{ix:+04d}/{iy:+04d}"
-            print(f"Found tile: {tile_id}")
             tiles.append(tile_id)
 
           json.dump(tiles, sys.stdout)
@@ -225,6 +236,13 @@ spec:
           limits:
             cpu: 12
             memory: 160Gi
+          # This was used in Digital Earth Pacific
+          # requests:
+          #   memory: 280Gi
+          #   cpu: 30
+          # limits:
+          #   cpu: 40
+          #   memory: 350Gi
         env:
           - name: AWS_DEFAULT_REGION
             value: "ap-southeast-3"
