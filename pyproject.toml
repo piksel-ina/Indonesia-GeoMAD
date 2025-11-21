@@ -1,0 +1,20 @@
+[project]
+name = "indonesia-geomad"
+version = "0.1.0"
+description = "Indonesia GeoMAD Development Env"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "odc-stats>=1.9.7",
+    "pandas",
+    "matplotlib",
+    "psycopg2-binary>=2.9.11",
+    "ipykernel>=7.1.0",
+    "geopandas>=1.1.1",
+    "aiohttp>=3.9.0,<4.0.0",
+    "aiobotocore>=2.11.0",
+]
+
+[tool.uv]
+prerelease = "allow"
+
