@@ -1,0 +1,133 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-80-tile-268-16-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "268:269,-16:-15"
+      - name: cloud-cover-max
+        value: "80"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-80-tile-190-8-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "190:191,8:9"
+      - name: cloud-cover-max
+        value: "80"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-80-tile-271-13-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "271:272,-13:-12"
+      - name: cloud-cover-max
+        value: "80"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-80-tile-195-2-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "195:196,-2:-1"
+      - name: cloud-cover-max
+        value: "80"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-60-tile-268-16-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "268:269,-16:-15"
+      - name: cloud-cover-max
+        value: "60"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-60-tile-190-8-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "190:191,8:9"
+      - name: cloud-cover-max
+        value: "60"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-60-tile-271-13-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "271:272,-13:-12"
+      - name: cloud-cover-max
+        value: "60"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-a-60-tile-195-2-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual
+  arguments:
+    parameters:
+      - name: tiles
+        value: "195:196,-2:-1"
+      - name: cloud-cover-max
+        value: "60"

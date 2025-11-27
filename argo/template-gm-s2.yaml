@@ -1,7 +1,8 @@
-kind: Workflow
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
 
 metadata:
-  generateName: stats-s2-geomad-annual-
+  name: stats-s2-geomad-annual
   namespace: argo-workflows
 
 spec:
@@ -16,7 +17,12 @@ spec:
     strategy: OnWorkflowDeletion
     forceFinalizerRemoval: true
   nodeSelector:
-    karpenter.sh/capacity-type: "spot"
+    data-production: r8xlarge
+  tolerations:
+    - key: data-production
+      operator: Equal
+      value: r8xlarge
+      effect: NoSchedule
   podMetadata:
     annotations:
       karpenter.sh/do-not-disrupt: "true"
@@ -36,7 +42,9 @@ spec:
       - name: grid
         value: "EPSG:6933;10;5000"
       - name: tiles
-        value: "" # test-tiles: "237:239,-14:-13" - 6 tiles around Jakarta
+        value: "" # test-tiles: "237:239,-14:-13"
+      - name: cloud-cover-max
+        value: "80"
       - name: year
         value: "2024"
       - name: output-product-name
@@ -110,6 +118,8 @@ spec:
                   value: "{{workflow.parameters.input-product}}"
                 - name: tiles
                   value: "{{workflow.parameters.tiles}}"
+                - name: cloud-cover-max
+                  value: "{{workflow.parameters.cloud-cover-max}}"
 
           - name: fanout-db
             depends: generate-db.Succeeded
@@ -147,6 +157,7 @@ spec:
           - name: year
           - name: input-product
           - name: tiles
+          - name: cloud-cover-max
       outputs:
         artifacts:
           - name: db
@@ -205,7 +216,6 @@ spec:
 
             cd /tmp
 
-            # Conditionally add --tiles if provided
             TILES_ARG=""
             if [ -n "{{inputs.parameters.tiles}}" ]; then
               TILES_ARG="--tiles={{inputs.parameters.tiles}}"
@@ -217,6 +227,7 @@ spec:
               --grid="{{inputs.parameters.grid}}" \
               --year="{{inputs.parameters.year}}" \
               --input-products="{{inputs.parameters.input-product}}" \
+              --dataset-filter='{"cloud_cover": [0,{{inputs.parameters.cloud-cover-max}}]}' \
               $TILES_ARG \
               job.db
 
@@ -269,11 +280,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 180Gi
-            cpu: 20
+            memory: 240Gi
+            cpu: 29
           limits:
-            cpu: 20
-            memory: 185Gi
+            cpu: 30
+            memory: 244Gi
 
         env:
           - name: AWS_DEFAULT_REGION
@@ -292,8 +303,8 @@ spec:
               --apply_eodatasets3 \
               --plugin-config="{{inputs.parameters.plugin-config}}" \
               --config="{{inputs.parameters.main-config}}" \
-              --threads="19" \
-              --memory-limit="170Gi" \
+              --threads="28" \
+              --memory-limit="240Gi" \
               --location="s3://{{inputs.parameters.output-bucket}}/{{inputs.parameters.output-path}}/{{workflow.parameters.version}}/" \
               /tmp/job.db \
               {{inputs.parameters.tile-id}}
