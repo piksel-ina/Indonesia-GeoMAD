@@ -1,0 +1,312 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+
+metadata:
+  name: stats-s2-geomad-annual-r8xlarge
+  namespace: argo-workflows
+
+spec:
+  entrypoint: workflow-entrypoint
+  serviceAccountName: argo-workflows-executor
+  podGC:
+    strategy: OnPodSuccess
+  ttlStrategy:
+    secondsAfterSuccess: 120
+    secondsAfterFailure: 300
+  artifactGC:
+    strategy: OnWorkflowDeletion
+    forceFinalizerRemoval: true
+  nodeSelector:
+    data-production: r8xlarge
+  tolerations:
+    - key: data-production
+      operator: Equal
+      value: r8xlarge
+      effect: NoSchedule
+  podMetadata:
+    annotations:
+      karpenter.sh/do-not-disrupt: "true"
+  parallelism: 1
+  arguments:
+    parameters:
+      - name: image-name
+        value: "ghcr.io/opendatacube/odc-stats"
+      - name: image-tag
+        value: "latest"
+      - name: version
+        value: "0.0.1"
+      - name: input-product
+        value: "s2_l2a"
+      - name: frequency
+        value: "annual"
+      - name: grid
+        value: "EPSG:6933;10;5000"
+      - name: tiles
+        value: "" # test-tiles: "237:239,-14:-13"
+      - name: cloud-cover-max
+        value: "80"
+      - name: year
+        value: "2024"
+      - name: output-product-name
+        value: gm_s2
+      - name: output-bucket
+        value: piksel-staging-public-data
+      - name: output-path
+        value: gm_s2
+      - name: plugin-config
+        value: |
+          resampling: nearest
+          cloud_filters: 
+            cloud shadows: 
+              - [dilation, 5]
+            cloud medium probability: 
+              - [opening, 5]
+              - [dilation, 5]
+            cloud high probability: 
+              - [opening, 5]
+              - [dilation, 5]
+            thin cirrus: 
+              - [dilation, 5]
+          bands: 
+            - blue
+            - red
+            - green
+            - nir
+            - swir16
+            - swir22
+          rgb_bands: 
+            - red
+            - green
+            - blue
+          work_chunks: [100, 100]
+      - name: main-config
+        value: |
+          product:
+            name: {{workflow.parameters.output-product-name}}
+            short_name: {{workflow.parameters.output-product-name}}
+            version: {{workflow.parameters.version}}
+            product_family: geomedian
+            region_code_format: "x{x:03d}y{y:03d}"
+            explorer_path: explorer.staging.pik-sel.id
+          s3_acl: public-read
+
+          cog_opts:
+            zlevel: 9
+            overrides:
+              rgba:
+                compress: JPEG
+                jpeg_quality: 90
+
+          aws_unsigned: false
+          overwrite: false
+
+  templates:
+    - name: workflow-entrypoint
+      dag:
+        tasks:
+          - name: generate-db
+            template: generate-db
+            arguments:
+              parameters:
+                - name: frequency
+                  value: "{{workflow.parameters.frequency}}"
+                - name: grid
+                  value: "{{workflow.parameters.grid}}"
+                - name: year
+                  value: "{{workflow.parameters.year}}"
+                - name: input-product
+                  value: "{{workflow.parameters.input-product}}"
+                - name: tiles
+                  value: "{{workflow.parameters.tiles}}"
+                - name: cloud-cover-max
+                  value: "{{workflow.parameters.cloud-cover-max}}"
+
+          - name: fanout-db
+            depends: generate-db.Succeeded
+            template: fanout-db
+            arguments:
+              artifacts:
+                - name: db
+                  from: "{{tasks.generate-db.outputs.artifacts.db}}"
+
+          - name: process-tile
+            depends: fanout-db.Succeeded
+            template: process
+            arguments:
+              parameters:
+                - name: tile-id
+                  value: "{{item}}"
+                - name: output-bucket
+                  value: "{{workflow.parameters.output-bucket}}"
+                - name: output-path
+                  value: "{{workflow.parameters.output-path}}"
+                - name: plugin-config
+                  value: "{{workflow.parameters.plugin-config}}"
+                - name: main-config
+                  value: "{{workflow.parameters.main-config}}"
+              artifacts:
+                - name: db
+                  from: "{{tasks.generate-db.outputs.artifacts.db}}"
+            withParam: "{{tasks.fanout-db.outputs.result}}"
+
+    - name: generate-db
+      inputs:
+        parameters:
+          - name: frequency
+          - name: grid
+          - name: year
+          - name: input-product
+          - name: tiles
+          - name: cloud-cover-max
+      outputs:
+        artifacts:
+          - name: db
+            path: /tmp/job.db
+      container:
+        image: "{{workflow.parameters.image-name}}:{{workflow.parameters.image-tag}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 1.0
+        env:
+          - name: DB_HOSTNAME
+            value: "pg-proxy-service.database.svc.cluster.local"
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: password
+          - name: DB_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_DB_HOSTNAME
+            value: "pg-proxy-service.database.svc.cluster.local"
+          - name: ODC_DEFAULT_DB_PORT
+            value: "6432"
+          - name: ODC_DEFAULT_DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: password
+          - name: ODC_DEFAULT_DB_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_INDEX_DRIVER
+            value: "postgis"
+        command: ["/bin/bash"]
+        args:
+          - "-c"
+          - |
+            set -ex
+
+            cd /tmp
+
+            TILES_ARG=""
+            if [ -n "{{inputs.parameters.tiles}}" ]; then
+              TILES_ARG="--tiles={{inputs.parameters.tiles}}"
+            fi
+
+            echo "Preparing DB..."
+            odc-stats save-tasks \
+              --frequency="{{inputs.parameters.frequency}}" \
+              --grid="{{inputs.parameters.grid}}" \
+              --year="{{inputs.parameters.year}}" \
+              --input-products="{{inputs.parameters.input-product}}" \
+              --dataset-filter='{"cloud_cover": [0,{{inputs.parameters.cloud-cover-max}}]}' \
+              $TILES_ARG \
+              job.db
+
+            echo "Done"
+
+    - name: fanout-db
+      inputs:
+        artifacts:
+          - name: db
+            path: /tmp/job.db
+
+      script:
+        image: "{{workflow.parameters.image-name}}:{{workflow.parameters.image-tag}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 1.0
+        command: [python]
+        source: |
+          import json
+          import sys
+
+          from odc.stats.tasks import TaskReader
+
+          reader = TaskReader("/tmp/job.db")
+          tasks = reader.all_tiles
+          tiles = []
+
+          for period, ix, iy in tasks:
+            tile_id = f"{period}/{ix:+04d}/{iy:+04d}"
+            tiles.append(tile_id)
+
+          json.dump(tiles, sys.stdout)
+
+    - name: process
+      inputs:
+        parameters:
+          - name: tile-id
+          - name: output-bucket
+          - name: output-path
+          - name: main-config
+          - name: plugin-config
+        artifacts:
+          - name: db
+            path: /tmp/job.db
+
+      container:
+        image: "{{workflow.parameters.image-name}}:{{workflow.parameters.image-tag}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 238Gi
+            cpu: 29
+          limits:
+            cpu: 30
+            memory: 242Gi
+
+        env:
+          - name: AWS_DEFAULT_REGION
+            value: "ap-southeast-3"
+
+        command: ["/bin/bash"]
+        args:
+          - "-c"
+          - |
+            set -ex
+
+            echo "Processing tile: {{inputs.parameters.tile-id}}"
+
+            odc-stats run \
+              --plugin="gm-s2" \
+              --apply_eodatasets3 \
+              --plugin-config="{{inputs.parameters.plugin-config}}" \
+              --config="{{inputs.parameters.main-config}}" \
+              --threads="28" \
+              --memory-limit="242Gi" \
+              --location="s3://{{inputs.parameters.output-bucket}}/{{inputs.parameters.output-path}}/{{workflow.parameters.version}}/" \
+              /tmp/job.db \
+              {{inputs.parameters.tile-id}}
+
+            echo "Completed tile: {{inputs.parameters.tile-id}}"

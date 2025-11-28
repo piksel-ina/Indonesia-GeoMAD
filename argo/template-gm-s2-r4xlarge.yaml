@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 
 metadata:
-  name: stats-s2-geomad-annual
+  name: stats-s2-geomad-annual-r4xlarge
   namespace: argo-workflows
 
 spec:
@@ -17,11 +17,11 @@ spec:
     strategy: OnWorkflowDeletion
     forceFinalizerRemoval: true
   nodeSelector:
-    data-production: r8xlarge
+    data-production: r4xlarge
   tolerations:
     - key: data-production
       operator: Equal
-      value: r8xlarge
+      value: r4xlarge
       effect: NoSchedule
   podMetadata:
     annotations:
@@ -280,11 +280,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 240Gi
-            cpu: 29
+            memory: 118Gi
+            cpu: 14
           limits:
-            cpu: 30
-            memory: 244Gi
+            cpu: 15
+            memory: 120Gi
 
         env:
           - name: AWS_DEFAULT_REGION
@@ -303,8 +303,8 @@ spec:
               --apply_eodatasets3 \
               --plugin-config="{{inputs.parameters.plugin-config}}" \
               --config="{{inputs.parameters.main-config}}" \
-              --threads="28" \
-              --memory-limit="240Gi" \
+              --threads="14" \
+              --memory-limit="120Gi" \
               --location="s3://{{inputs.parameters.output-bucket}}/{{inputs.parameters.output-path}}/{{workflow.parameters.version}}/" \
               /tmp/job.db \
               {{inputs.parameters.tile-id}}
