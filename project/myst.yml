@@ -1,0 +1,149 @@
+# See docs at: https://mystmd.org/guide/frontmatter
+version: 1
+
+project:
+  id: 1e71dd46-af37-4eea-a09a-c2d3464e916b
+  
+  # Publication Metadata
+  title: >-
+    Cost-Efficient National-Scale GeoMAD Compositing for Natural Resource Inventory:
+    A Cloud-Native Open Data Cube Workflow in Indonesia
+  
+  description: >-
+    A reproducible cloud-native workflow for national-scale GeoMAD production using 
+    Open Data Cube and Kubernetes-based orchestration, demonstrating cost optimization 
+    through adaptive resource allocation and cloud cover threshold optimization.
+  
+  # Short title for headers/citations
+  short_title: Cloud-Native GeoMAD Production in Indonesia
+  
+  # Keywords for indexing
+  keywords:
+    - GeoMAD
+    - Sentinel-2
+    - Open Data Cube
+    - ODC-Stats
+    - Cloud-Native Processing
+    - Kubernetes
+    - Argo Workflows
+    - Resource Optimization
+    - Cost-Benefit Analysis
+    - Indonesia
+    - Tropical Remote Sensing
+    - National Mapping
+    - Reproducible Workflows
+    - Earth Observation
+  
+  # Authors
+  authors:
+    - name: Muhammad Taufik
+      affiliations:
+        - Badan Informasi Geospasial (BIG)
+      email: muhammad.taufik@big.go.id
+      orcid: 0000-0000-0000-0000  
+      roles:
+        - Conceptualization
+        - Methodology
+        - Software
+        - Validation
+        - Formal Analysis
+        - Investigation
+        - Data Curation
+        - Writing - Original Draft
+        - Visualization
+      corresponding: true
+    
+    # co-authors
+    # - name: Co-Author Name
+    #   affiliations:
+    #     - Institution Name
+    #   email: coauthor@example.com
+    #   orcid: 0000-0000-0000-0000
+    #   roles:
+    #     - Validation
+    #     - Writing - Review & Editing
+  
+  # Funding and acknowledgments
+  funding:
+    - statement: >-
+        Cloud infrastructure for this work was provided by Geoscience Australia 
+        as part of the Australian Government's Southeast Asia Maritime Partnerships 
+        program, supporting geospatial mapping cooperation with Indonesia.
+
+  acknowledgments: >-
+      This work was conducted through collaboration between Badan Informasi 
+      Geospasial (BIG) Indonesia and Geoscience Australia. The authors thank 
+      [specific GA collaborators] for technical guidance and infrastructure support.
+  
+  # License
+  license:
+    content: CC-BY-4.0
+    code: MIT
+  
+  # Repository information
+  github: https://github.com/piksel-ina/Indonesia-GeoMAD
+  
+  # DOI (add after publication)
+  # doi: 10.xxxx/xxxxx
+  
+  # Dates
+  date: 2026-06-01  # Submission target date
+  
+  # Open access
+  open_access: true
+  
+  # Subject classification
+  subject: Remote Sensing 
+  
+  # Venue (update when decided)
+  venue:
+    title: International Journal of Applied Earth Observation and Geoinformation
+    # short_title: IJAEO
+    # url: https://www.journals.elsevier.com/international-journal-of-applied-earth-observation-and-geoinformation
+
+# Site configuration
+site:
+  template: book-theme
+  
+  title: Indonesia GeoMAD Production Workflow
+  
+  # Navigation and structure
+  nav:
+    - title: Home
+      url: /
+    - title: Methodology
+      url: /methodology
+    - title: Results
+      url: /results
+    - title: Supplementary Materials
+      url: /supplementary
+  
+  # Actions/downloads
+  actions:
+    - title: Download PDF
+      url: indonesia-geomad.pdf
+    - title: View on GitHub
+      url: https://github.com/piksel-ina/Indonesia-GeoMAD
+
+# Bibliography
+bibliography:
+  - references.bib
+
+# Jupyter execution
+jupyter:
+  execute:
+    execute_notebooks: cache
+    timeout: 600
+    allow_errors: false
+
+# Export options
+exports:
+  - format: pdf
+    template: arxiv_two_column
+    output: indonesia-geomad.pdf
+  
+  - format: docx
+    output: indonesia-geomad.docx
+  
+  - format: jats
+    output: indonesia-geomad.xml
