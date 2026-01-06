@@ -1,0 +1,29 @@
+# Main configuration for odc-stats processing
+product:
+  name: gm_s2_annual
+  short_name: gm_s2_annual
+  version: 0.0.1
+  product_family: geomedian
+  region_code_format: "x{x:03d}y{y:03d}"
+  explorer_path: explorer.staging.piksel.big.go.id
+
+output:
+  write_stac: false
+  write_data: true
+  location_prefix: ""
+
+write_metadata: false
+
+# COG output options
+cog_opts:
+  zlevel: 9
+  overrides:
+    rgba:
+      compress: JPEG
+      jpeg_quality: 90
+
+max_processing_time: 3600
+job_queue_max_lease: 300
+renew_safety_margin: 60
+future_poll_interval: 2
+s3_acl: public-read

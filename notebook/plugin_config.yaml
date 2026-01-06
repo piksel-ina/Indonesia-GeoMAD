@@ -1,0 +1,33 @@
+# Plugin-specific configuration for gm-s2
+resampling: nearest
+
+# Cloud filtering configuration
+cloud_filters:
+  'cloud shadows':
+    - [dilation, 5]
+  'cloud medium probability':
+    - [opening, 5]
+    - [dilation, 5]
+  'cloud high probability':
+    - [opening, 5] 
+    - [dilation, 5]
+  'thin cirrus':
+    - [dilation, 5]
+
+# Band selection
+bands:
+  - blue
+  - red
+  - green
+  - nir
+  - swir16
+  - swir22
+
+rgb_bands:
+  - red
+  - green
+  - blue
+
+# Processing chunks
+work_chunks: [100, 100]
+

@@ -11,11 +11,11 @@ product:
   version: 0.0.1
   product_family: geomedian
   region_code_format: "x{x:03d}y{y:03d}"
+  write_stac: false
 max_processing_time: 3600
 job_queue_max_lease: 300
 renew_safety_margin: 60
 future_poll_interval: 2
-s3_acl: public-read
 # Generic product attributes
 cog_opts:
   zlevel: 9

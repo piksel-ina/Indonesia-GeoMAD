@@ -210,3 +210,21 @@ notebook/tasks*
 
 # MyST build outputs
 _build
+
+# ODC Stats Ouputs
+*P1Y.geojson
+*P1Y.csv
+*P1Y.db
+*P1Y.sha1
+*P1Y.stac-item.json
+*P1Y_BCMAD.tif
+*P1Y_COUNT.tif
+*P1Y_EMAD.tif
+*P1Y_SMAD.tif
+*P1Y_blue.tif
+*P1Y_green.tif
+*P1Y_nir.tif
+*P1Y_red.tif
+*P1Y_rgba.tif
+*P1Y_swir16.tif
+*P1Y_swir22.tif
