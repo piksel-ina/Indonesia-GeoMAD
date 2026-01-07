@@ -28,19 +28,19 @@ _File reference: x271y-13_
 
 ::::{grid} 3
 :::{grid-item}
-```{figure} ../output/test-a/cc60_x271y-13_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc60_x271y-13_2024--P1Y_rgba.jpg
 **CC 60** (Count: 19)
 ```
 :::
 
 :::{grid-item}
-```{figure} ../output/test-a/cc80_x271y-13_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc80_x271y-13_2024--P1Y_rgba.jpg
 **CC 80** (Count: 64)
 ```
 :::
 
 :::{grid-item}
-```{figure} ../output/test-a/cc100_x271y-13_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc100_x271y-13_2024--P1Y_rgba.jpg
 **CC 100** (Count: 146)
 ```
 :::
@@ -50,19 +50,19 @@ _File reference: x271y-13_
 
 ::::{grid} 3
 :::{grid-item}
-```{figure} ../output/test-a/cc60_x195y-02_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc60_x195y-02_2024--P1Y_rgba.jpg
 **CC 60** (Count: 24)
 ```
 :::
 
 :::{grid-item}
-```{figure} ../output/test-a/cc80_x195y-02_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc80_x195y-02_2024--P1Y_rgba.jpg
 **CC 80** (Count: 64)
 ```
 :::
 
 :::{grid-item}
-```{figure} ../output/test-a/cc100_x195y-02_2024--P1Y_rgba.jpg
+```{figure}./images/test-a/cc100_x195y-02_2024--P1Y_rgba.jpg
 **CC 100** (Count: 147)
 ```
 :::
@@ -84,7 +84,7 @@ Analysis of locations categorized under day observations.
 ::::{grid} 3
 :::{grid-item}
 
-```{figure} ../output/test-a/cc60_x268y-16_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc60_x268y-16_2024--P1Y_rgba.jpg
 **CC 60** (Count: 17)
 ```
 
@@ -92,7 +92,7 @@ Analysis of locations categorized under day observations.
 
 :::{grid-item}
 
-```{figure} ../output/test-a/cc80_x268y-16_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc80_x268y-16_2024--P1Y_rgba.jpg
 **CC 80** (Count: 41)
 ```
 
@@ -100,7 +100,7 @@ Analysis of locations categorized under day observations.
 
 :::{grid-item}
 
-```{figure} ../output/test-a/cc100_x268y-16_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc100_x268y-16_2024--P1Y_rgba.jpg
 **CC 100** (Count: 41)
 ```
 
@@ -114,7 +114,7 @@ Analysis of locations categorized under day observations.
 
 :::{grid-item}
 
-```{figure} ../output/test-a/cc60_x190y008_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc60_x190y008_2024--P1Y_rgba.jpg
 **CC 60** (Count: 20)
 ```
 
@@ -122,7 +122,7 @@ Analysis of locations categorized under day observations.
 
 :::{grid-item}
 
-```{figure} ../output/test-a/cc80_x190y008_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc80_x190y008_2024--P1Y_rgba.jpg
 **CC 80** (Count: 42)
 ```
 
@@ -130,7 +130,7 @@ Analysis of locations categorized under day observations.
 
 :::{grid-item}
 
-```{figure} ../output/test-a/cc100_x190y008_2024--P1Y_rgba.jpg
+```{figure} ./images/test-a/cc100_x190y008_2024--P1Y_rgba.jpg
 **CC 100** (Count: 42)
 ```
 
