@@ -19,6 +19,7 @@ dependencies = [
     "rasterio>=1.4.3",
     "rioxarray>=0.20.0",
     "folium>=0.20.0",
+    "pystac-client>=0.9.0",
 ]
 
 [tool.uv]
