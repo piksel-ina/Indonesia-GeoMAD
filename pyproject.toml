@@ -20,6 +20,7 @@ dependencies = [
     "rioxarray>=0.20.0",
     "folium>=0.20.0",
     "pystac-client>=0.9.0",
+    "mapclassify>=2.10.0",
 ]
 
 [tool.uv]
