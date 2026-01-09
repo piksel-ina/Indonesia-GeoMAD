@@ -36,7 +36,7 @@ spec:
       - name: version
         value: "0.0.1"
       - name: input-product
-        value: "s2_l2a"
+        value: "sentinel_2_l2a_c0"
       - name: frequency
         value: "annual"
       - name: grid
