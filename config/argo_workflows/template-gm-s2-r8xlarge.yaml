@@ -36,7 +36,7 @@ spec:
       - name: version
         value: "0.0.1"
       - name: input-product
-        value: "sentinel_2_l2a_c0"
+        value: "s2_l2a"
       - name: frequency
         value: "annual"
       - name: grid
@@ -310,3 +310,20 @@ spec:
               {{inputs.parameters.tile-id}}
 
             echo "Completed tile: {{inputs.parameters.tile-id}}"
+
+            echo "=== Memory usage (cgroup) ==="
+
+            peak_file=/sys/fs/cgroup/memory.peak
+            [ -r "$peak_file" ] || peak_file=/sys/fs/cgroup/memory/memory.max_usage_in_bytes
+
+            if [ -r "$peak_file" ]; then
+              b="$(cat "$peak_file")"
+              printf "peak:    %s bytes (%s)\n" "$b" "$(printf "%s" "$b" | numfmt --to=iec-i --suffix=B)"
+            else
+              echo "peak: (no cgroup peak file found)"
+            fi
+
+            if [ -r /sys/fs/cgroup/memory.current ]; then
+              b="$(cat /sys/fs/cgroup/memory.current)"
+              printf "current: %s bytes (%s)\n" "$b" "$(printf "%s" "$b" | numfmt --to=iec-i --suffix=B)"
+            fi
