@@ -250,17 +250,25 @@ spec:
         source: |
           import json
           import sys
-
           from odc.stats.tasks import TaskReader
 
+          TARGET_TILES = {
+            (211, -1),
+            (211, -2),
+            (212, -1),
+            (212, -2),
+            (256, -8),
+            (256, -7),
+          }
+
           reader = TaskReader("/tmp/job.db")
-          tasks = reader.all_tiles
           tiles = []
 
-          for period, ix, iy in tasks:
-            tile_id = f"{period}/{ix:+04d}/{iy:+04d}"
-            tiles.append(tile_id)
+          for period, ix, iy in reader.all_tiles:
+            if (ix, iy) in TARGET_TILES:
+              tiles.append(f"{period}/{ix:+04d}/{iy:+04d}")
 
+          print(f"selected tiles: {len(tiles)}", file=sys.stderr)
           json.dump(tiles, sys.stdout)
 
     - name: process
@@ -300,7 +308,6 @@ spec:
 
             odc-stats run \
               --plugin="gm-s2" \
-              --apply_eodatasets3 \
               --plugin-config="{{inputs.parameters.plugin-config}}" \
               --config="{{inputs.parameters.main-config}}" \
               --threads="14" \

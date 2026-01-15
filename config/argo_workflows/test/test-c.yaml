@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: test-c-60-
+  namespace: argo-workflows
+spec:
+  serviceAccountName: argo-workflows-executor
+  workflowTemplateRef:
+    name: stats-s2-geomad-annual-r4xlarge
+  arguments:
+    parameters:
+      - name: cloud-cover-max
+        value: "60"
+      - name: output-path
+        value: "gm_s2_testc"
+      - name: tiles
+        value: "211:212,-1:0"
