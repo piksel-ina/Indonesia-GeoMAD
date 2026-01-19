@@ -5,8 +5,11 @@ product:
   version: 0.0.1
   product_family: geomedian
   region_code_format: "x{x:03d}y{y:03d}"
-  explorer_path: explorer.staging.piksel.big.go.id
-
+  collections_site: "collections.staging.piksel.big.go.id"
+  producer: "big.go.id"
+  naming_conventions_values: ""
+  explorer_path: "https://explorer.staging.piksel.big.go.id/"
+  
 output:
   write_stac: false
   write_data: true

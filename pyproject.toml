@@ -3,10 +3,15 @@ name = "indonesia-geomad"
 version = "0.1.0"
 description = "Indonesia GeoMAD Development Env"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "odc-stats>=1.9.7",
+    "odc-stats @ git+https://github.com/piksel-ina/odc-stats.git@3721289469dbaf6c08d6bf81565c245ab8cb323a",
+    "odc-stac==0.4.0",
     "pandas",
+    "netcdf4",
+    "scipy>=1.13,<1.15",
+    "numpy>=2.0,<2.3",
+    "hdstats>=0.2.1",
     "matplotlib",
     "psycopg2-binary>=2.9.11",
     "ipykernel>=7.1.0",
