@@ -34,12 +34,12 @@ This repository supports generation of multiple spectral statistics:
     sudo apt-get install libpq-dev python3-dev
     ```
 
-3. **Install Project Dependencies**  
+3. **Install Project Dependencies (Notebook Environment)**  
 
    Create virtual environment and install all packages from `pyproject.toml`:
     
     ```bash
-    uv sync
+    uv sync --extra notebook
     ```
 
 4. **Activate Virtual Environment**
@@ -75,8 +75,11 @@ source .venv/bin/activate
 # Add a new package
 uv add package-name
 
-# Example: Add a specific package
-uv add numpy
+# Add a new package to the notebook environment
+uv add --group notebook package-name
+
+# Sync to apply changes
+uv sync --extra notebook
 ```
 
 ## Acknowledgments
