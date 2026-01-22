@@ -1,0 +1,29 @@
+# environment and network are adjusted for local development alongside piksel-core services
+services:
+  geomad:
+    build:
+      context: ./
+      dockerfile: docker/Dockerfile
+    platform: linux/x86_64
+    environment:
+      - ODC_DEFAULT_DB_USERNAME=piksel_user
+      - ODC_DEFAULT_DB_DATABASE=piksel_db
+      - ODC_DEFAULT_DB_HOSTNAME=postgres
+      - ODC_DEFAULT_DB_PASSWORD=passwordPiksel
+      - ODC_DEFAULT_DB_PORT=5432
+      - ODC_DEFAULT_INDEX_DRIVER=postgis
+    restart: unless-stopped
+    command: tail -f /dev/null
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "test -x /opt/venv/bin/odc-stats"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - piksel-net
+
+networks:
+  piksel-net:
+    external: true
+
