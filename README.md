@@ -42,6 +42,11 @@ This repository supports generation of multiple spectral statistics:
     uv sync --extra notebook
     ```
 
+   **Warning (GDAL version pinning):**
+    > Our dependency lock pins a specific GDAL version to match the production/testing environment.  
+    > If you’re running on a machine with a different system GDAL version, installation may fail or behave unexpectedly.  
+    > In that case, adjust the GDAL pin to match your system (or remove the version constraint).
+
 4. **Activate Virtual Environment**
 
     Activate the environment to access installed packages:

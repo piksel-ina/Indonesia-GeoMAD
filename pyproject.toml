@@ -4,8 +4,10 @@ version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 
 dependencies = [
-  "odc-stats @ git+https://github.com/piksel-ina/odc-stats.git@3721289469dbaf6c08d6bf81565c245ab8cb323a",
+  "odc-stats @ git+https://github.com/piksel-ina/odc-stats.git@39b34ff6c25fcf50ac351f71f208745cd85f9a40",
   "odc-stac==0.4.0",
+  "datacube==1.9.10",
+  "gdal==3.12.0.post1",
   "numpy>=2.0,<2.3",
   "scipy>=1.13,<1.15",
   "pandas",
@@ -20,6 +22,7 @@ dependencies = [
   "pystac-client>=0.9.0",
   "hdstats>=0.2.1",
   "mapclassify>=2.10.0",
+  "scikit-image<0.26"
 ]
 
 [project.optional-dependencies]
