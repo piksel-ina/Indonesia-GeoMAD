@@ -30,7 +30,7 @@ jobs:
 
       - name: Generate date tag
         id: date
-        run: echo "tag=$(date -u +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
+        run: echo "tag=geomad-v$(date -u +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
