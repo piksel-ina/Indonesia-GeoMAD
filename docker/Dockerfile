@@ -25,7 +25,7 @@ RUN python3 -m venv ${VIRTUAL_ENV}
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
 COPY pyproject.toml /app/
-COPY uv.docker.lock /app/uv.lock
+COPY uv.lock /app/uv.lock
 
 RUN uv sync --active --no-dev --frozen
 
