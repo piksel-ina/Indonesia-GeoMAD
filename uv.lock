@@ -1018,7 +1018,7 @@ requires-dist = [
     { name = "netcdf4" },
     { name = "numpy", specifier = ">=2.0,<2.3" },
     { name = "odc-stac", specifier = "==0.4.0" },
-    { name = "odc-stats", git = "https://github.com/piksel-ina/odc-stats.git?rev=39b34ff6c25fcf50ac351f71f208745cd85f9a40" },
+    { name = "odc-stats", git = "https://github.com/piksel-ina/odc-stats.git?rev=49a935ffbbef59824056026301158df8d7ef77e2" },
     { name = "pandas" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pystac-client", specifier = ">=0.9.0" },
@@ -1803,8 +1803,8 @@ wheels = [
 
 [[package]]
 name = "odc-stats"
-version = "0.1.dev755+g39b34ff6c"
-source = { git = "https://github.com/piksel-ina/odc-stats.git?rev=39b34ff6c25fcf50ac351f71f208745cd85f9a40#39b34ff6c25fcf50ac351f71f208745cd85f9a40" }
+version = "0.1.dev761+g49a935ffb"
+source = { git = "https://github.com/piksel-ina/odc-stats.git?rev=49a935ffbbef59824056026301158df8d7ef77e2#49a935ffbbef59824056026301158df8d7ef77e2" }
 dependencies = [
     { name = "ai-edge-litert" },
     { name = "botocore" },
@@ -1823,6 +1823,7 @@ dependencies = [
     { name = "odc-dscache" },
     { name = "odc-geo" },
     { name = "odc-io" },
+    { name = "odc-stac" },
     { name = "pandas" },
     { name = "pystac" },
     { name = "rasterio" },
