@@ -1,4 +1,7 @@
-.PHONY : start rm exec save-tasks
+.PHONY : start build rm exec save-tasks
+
+build:
+	docker compose build geomad
 
 start: 
 	docker compose up -d geomad

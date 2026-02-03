@@ -4,7 +4,8 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 
 ENV GDAL_DATA=/usr/share/gdal \
-    PROJ_LIB=/usr/share/proj
+    PROJ_DATA=/usr/local/share/proj \
+    PROJ_LIB=/usr/local/share/proj
 
 COPY docker/distributed.yaml /etc/dask/distributed.yaml
 
