@@ -7,11 +7,11 @@ product:
   region_code_format: "x{x:03d}y{y:03d}"
   collections_site: "collections.staging.piksel.big.go.id"
   producer: "big.go.id"
-  naming_conventions_values: ""
+  naming_conventions_values: "de-indonesia-"
   explorer_path: "https://explorer.staging.piksel.big.go.id/"
   
 output:
-  write_stac: false
+  write_stac: true
   write_data: true
   location_prefix: ""
 
