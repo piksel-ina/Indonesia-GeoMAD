@@ -207,7 +207,6 @@ marimo/_lsp/
 __marimo__/
 
 notebook/tasks*
-notebook/*.csv
 
 # MyST build outputs
 _build

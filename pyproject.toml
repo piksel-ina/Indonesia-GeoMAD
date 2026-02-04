@@ -4,7 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 
 dependencies = [
-  "odc-stats @ git+https://github.com/piksel-ina/odc-stats.git@4cc3b0d75c6ceacaadf3ed2f3762a1e0d51ba5ac",
+  "odc-stats @ git+https://github.com/piksel-ina/odc-stats.git@5feed99d906f3fedcc18691abcc0d301346c9107",
   "odc-stac==0.4.0",
   "datacube==1.9.10",
   "gdal==3.12.0.post1",
