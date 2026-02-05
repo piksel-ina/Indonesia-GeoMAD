@@ -31,7 +31,7 @@ spec:
     annotations:
       karpenter.sh/do-not-disrupt: "true"
 
-  parallelism: 25
+  parallelism: 30
 
   volumes:
     - name: efs-public-data
@@ -44,18 +44,6 @@ spec:
         value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/data-production:geomad-v20260204-0813"
       - name: version
         value: "0.0.1"
-      - name: input-product
-        value: "s2_l2a"
-      - name: frequency
-        value: "annual"
-      - name: grid
-        value: "EPSG:6933;10;5000"
-      - name: cloud-cover-max
-        value: "60"
-      - name: year
-        value: "2025"
-      - name: output-product-name
-        value: gm_s2
       - name: output-bucket
         value: piksel-staging-public-data
       - name: output-path
@@ -121,15 +109,16 @@ spec:
           db_path = "{{inputs.parameters.db-path}}"
 
           TARGET_TILES = {
-            (234, -19),
-            (231, -9),
+            # (234, -19),
+            # (233, -17),
+            # (235, -23),
           }
 
           reader = TaskReader(db_path)
           tiles = []
 
           for period, ix, iy in reader.all_tiles:
-            if (ix, iy) in TARGET_TILES:
+            if not TARGET_TILES or (ix, iy) in TARGET_TILES:
               tiles.append(f"{period}/{ix:+04d}/{iy:+04d}")
 
           print(f"selected tiles: {len(tiles)}", file=sys.stderr)
@@ -150,11 +139,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 58Gi
+            memory: 57Gi
             cpu: 7
           limits:
             cpu: 8
-            memory: 62.5Gi
+            memory: 62Gi
 
         volumeMounts:
           - name: efs-public-data
@@ -217,22 +206,9 @@ spec:
               --plugin-config="{{inputs.parameters.plugin-config-path}}" \
               --config="{{inputs.parameters.main-config-path}}" \
               --threads="8" \
-              --memory-limit="58Gi" \
+              --memory-limit="61Gi" \
               --location="s3://{{inputs.parameters.output-bucket}}/{{inputs.parameters.output-path}}/{{workflow.parameters.version}}/" \
               "{{inputs.parameters.db-path}}" \
               {{inputs.parameters.tile-id}}
 
             echo "Completed tile: {{inputs.parameters.tile-id}}"
-
-            echo "=== Memory usage (cgroup) ==="
-
-            peak_file=/sys/fs/cgroup/memory.peak
-            [ -r "$peak_file" ] || peak_file=/sys/fs/cgroup/memory/memory.max_usage_in_bytes
-
-            if [ -r "$peak_file" ]; then
-              peak_bytes=$(cat "$peak_file")
-              peak_human=$(numfmt --to=iec-i --suffix=B "$peak_bytes")
-              echo "Peak memory usage: $peak_human"
-            else
-              echo "Peak memory: unavailable"
-            fi

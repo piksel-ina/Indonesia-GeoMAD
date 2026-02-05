@@ -10,4 +10,6 @@ spec:
   arguments:
     parameters:
       - name: output-path
-        value: "gm_s2_testd"
+        value: "gm_s2"
+      - name: db-path
+        value: /data/public/geomad_task/2025/s2_l2a_2025--P1Y.db
