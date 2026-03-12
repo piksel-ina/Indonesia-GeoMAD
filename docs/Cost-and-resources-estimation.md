@@ -1,4 +1,5 @@
 ### 1. Resources Needed Summary
+## LAND AND SHALLOW WATER GRID
 
 > [!NOTE]
 >
@@ -7,12 +8,12 @@
 
 | **Resource**              | **Calculation**                     | **Result**                  |
 | ------------------------- | ----------------------------------- | --------------------------- |
-| **Total Processing Time** | 3,755 tiles ÷ 15 instances × 20 min | **83.44 hours (~3.5 days)** |
-| **Total Storage Needed**  | 3,755 tiles × 600 MB                | **2.15 TB (2,200 GB)**      |
+| **Total Processing Time** | 1201 tiles ÷ 15 instances × 70 min  | **93.4 hours (~3.89 days)** |
+| **Total Storage Needed**  | 1201 tiles × 600 MB                 | **1.08 TB (1081 GB)**       |
 
 ### 2. Cost Estimation
 
 | **Cost Item**                        | **Calculation**               | **USD**          | **IDR**              |
 | ------------------------------------ | ----------------------------- | ---------------- | -------------------- |
-| **Total Compute Cost**               | 1,250.42 hours × $0.1788/hour | **$223.58**      | **Rp 3,532,564**     |
+| **Total Compute Cost**               | 1401 hours × $0.131/hour      | **$183.55**      | **Rp 3,105,592.58**  |
 | **Storage Cost (S3 Standard/month)** | 2,200 GB × $0.023/GB          | **$50.60/month** | **Rp 799,480/month** |
