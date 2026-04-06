@@ -20,18 +20,18 @@ spec:
     forceFinalizerRemoval: true
 
   nodeSelector:
-    data-production: r4xlarge
+    data-production: r12xlarge
   tolerations:
     - key: data-production
       operator: Equal
-      value: r4xlarge
+      value: r12xlarge
       effect: NoSchedule
 
   podMetadata:
     annotations:
       karpenter.sh/do-not-disrupt: "true"
 
-  parallelism: 30
+  parallelism: 27
 
   volumes:
     - name: efs-public-data
@@ -49,11 +49,11 @@ spec:
       - name: output-path
         value: geomad_s2
       - name: db-path
-        value: /data/public/geomad_task_v2/2025/s2_l2a_2025--P1Y_tilelist.db
+        value: /data/public/geomad_task_v1/2025/s2_l2a_2025--P1Y_tilelist.db
       - name: main-config-path
-        value: /data/public/geomad_task_v2/main_config.yaml
+        value: /data/public/geomad_task_v1/main_config.yaml
       - name: plugin-config-path
-        value: /data/public/geomad_task_v2/plugin_config.yaml
+        value: /data/public/geomad_task_v1/plugin_config.yaml
 
   templates:
     - name: workflow-entrypoint
@@ -135,11 +135,11 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 120Gi
-            cpu: 13
+            memory: 128Gi
+            cpu: 14
           limits:
-            cpu: 15
-            memory: 125Gi
+            cpu: 16
+            memory: 128Gi
 
         volumeMounts:
           - name: efs-public-data
@@ -202,7 +202,7 @@ spec:
               --plugin-config="{{inputs.parameters.plugin-config-path}}" \
               --config="{{inputs.parameters.main-config-path}}" \
               --threads="8" \
-              --memory-limit="123Gi" \
+              --memory-limit="128Gi" \
               --location="s3://{{inputs.parameters.output-bucket}}/{{inputs.parameters.output-path}}/{{workflow.parameters.version}}/" \
               "{{inputs.parameters.db-path}}" \
               {{inputs.parameters.tile-id}}
