@@ -1,8 +1,8 @@
 # Main configuration for odc-stats processing
 product:
-  name: gm_s2_annual
-  short_name: gm_s2_annual
-  version: 0.0.1
+  name: geomad_s2_annual
+  short_name: geomad_s2_annual
+  version: 1.0.0
   product_family: geomedian
   region_code_format: "x{x:03d}y{y:03d}"
   collections_site: "collections.staging.piksel.big.go.id"
@@ -25,8 +25,9 @@ cog_opts:
       compress: JPEG
       jpeg_quality: 90
 
-max_processing_time: 3600
+max_processing_time: 7200
 job_queue_max_lease: 300
 renew_safety_margin: 60
 future_poll_interval: 2
 s3_acl: public-read
+s3_public: true
