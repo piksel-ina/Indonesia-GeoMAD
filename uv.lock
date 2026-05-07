@@ -139,15 +139,15 @@ wheels = [
 
 [[package]]
 name = "antimeridian"
-version = "0.4.5"
+version = "0.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "shapely" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0a/25/183493a0a47f1a70d22329083c65396ee8a343a6dbe6b3eb29d0da496099/antimeridian-0.4.5.tar.gz", hash = "sha256:088f8daec4109ce5d85d52e9b4382bffcbd1a5b47c78644898f9c6d8562d1207", size = 12632839, upload-time = "2025-11-26T14:41:03.361Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/75/9090aec3959ddc6a5881bc2f2f718a7510cbf518a3100718ca1097085506/antimeridian-0.4.4.tar.gz", hash = "sha256:cb6b9f93e7af6c3f064e0764974fdb62fe1a118926d010eabc4826b9f597ab3b", size = 12632548, upload-time = "2025-11-26T14:06:31.54Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/ce/68d6e31f0a75a5cccc03535e47434c0ca4be37fe950e93117e455cbc362c/antimeridian-0.4.5-py3-none-any.whl", hash = "sha256:8b1f82c077d2c48eae0a6606759cfec9133a0701250371cb707a56959451d9dd", size = 15111, upload-time = "2025-11-26T14:41:01.523Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/79/86484a6e3ef453dfa2f24caa971dc3f69baf95d3a0f2c6d7b378375394ab/antimeridian-0.4.4-py3-none-any.whl", hash = "sha256:050cf00e73dcd51a170042b32d8fa6280eecfe9faf1b13d24610bc22c85e7006", size = 15023, upload-time = "2025-11-26T14:06:29.705Z" },
 ]
 
 [[package]]
@@ -597,41 +597,37 @@ wheels = [
 
 [[package]]
 name = "datacube"
-version = "1.9.10"
+version = "1.9.18"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "affine" },
     { name = "alembic" },
     { name = "antimeridian" },
-    { name = "attrs" },
     { name = "cachetools" },
     { name = "click" },
-    { name = "cloudpickle" },
     { name = "dask", extra = ["array"] },
     { name = "deprecat" },
     { name = "distributed" },
     { name = "geoalchemy2" },
-    { name = "jsonschema" },
+    { name = "jsonschema", extra = ["format-nongpl"] },
     { name = "lark" },
     { name = "numpy" },
     { name = "odc-geo" },
     { name = "odc-loader" },
     { name = "odc-stac" },
-    { name = "packaging" },
     { name = "pandas" },
     { name = "pyproj" },
     { name = "python-dateutil" },
     { name = "pyyaml" },
     { name = "rasterio" },
-    { name = "ruamel-yaml" },
     { name = "shapely" },
     { name = "sqlalchemy" },
     { name = "toolz" },
     { name = "xarray" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/63/80a89359594dd3362a7be4351373f19453fda5811a81d16801bed9c893df/datacube-1.9.10.tar.gz", hash = "sha256:86883338460a73eb9105fff7ec01fcc37e638859e7ec56f693cc91ccf59da156", size = 2358145, upload-time = "2025-10-21T04:56:08.811Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/ec/27a9aa46800b7b5a890f924cd0310200197e334418b22d647efe1f50df54/datacube-1.9.18.tar.gz", hash = "sha256:f43ddbffa43980098a202920eca52968b729f48881424dc1b5fec3544a894607", size = 2463680, upload-time = "2026-04-16T02:11:42.03Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/0f/d2c3f52adfb34315524f702a2b16c86d45a5d466107929466d6e66654ffa/datacube-1.9.10-py3-none-any.whl", hash = "sha256:13db76095fa73db49d26691a2960934418b3730f638abe56aebac42440c12d61", size = 449436, upload-time = "2025-10-21T04:56:06.581Z" },
+    { url = "https://files.pythonhosted.org/packages/67/39/21fa1b4ecff2a2596831ca62dd1839c6c32e91071e6ae2d1ef227eada094/datacube-1.9.18-py3-none-any.whl", hash = "sha256:908c28e69055c1cd8ad7140d1bbd70abf6d20f23bbe101a81f3f2a18eff9d45c", size = 474316, upload-time = "2026-04-16T02:11:40.242Z" },
 ]
 
 [[package]]
@@ -972,6 +968,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiohttp" },
+    { name = "boto3" },
     { name = "datacube" },
     { name = "gdal" },
     { name = "geopandas" },
@@ -1005,8 +1002,9 @@ notebook = [
 requires-dist = [
     { name = "aiobotocore", specifier = ">=2.11.0" },
     { name = "aiohttp", specifier = ">=3.9.0,<4.0.0" },
+    { name = "boto3" },
     { name = "contextily", marker = "extra == 'notebook'", specifier = ">=1.6.2" },
-    { name = "datacube", specifier = "==1.9.10" },
+    { name = "datacube", specifier = "==1.9.18" },
     { name = "folium", marker = "extra == 'notebook'", specifier = ">=0.20.0" },
     { name = "gdal", specifier = "==3.12.0.post1" },
     { name = "geopandas", specifier = ">=1.1.1" },
@@ -1017,8 +1015,8 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'notebook'" },
     { name = "netcdf4" },
     { name = "numpy", specifier = ">=2.0,<2.3" },
-    { name = "odc-stac", specifier = "==0.4.0" },
-    { name = "odc-stats", git = "https://github.com/piksel-ina/odc-stats.git?rev=5feed99d906f3fedcc18691abcc0d301346c9107" },
+    { name = "odc-stac", specifier = ">=0.5.0" },
+    { name = "odc-stats", git = "https://github.com/piksel-ina/odc-stats.git?rev=df63d319fd534e29a4f1e27598fa280e387fc027" },
     { name = "pandas" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pystac-client", specifier = ">=0.9.0" },
@@ -1765,23 +1763,24 @@ wheels = [
 
 [[package]]
 name = "odc-loader"
-version = "0.5.1"
+version = "0.6.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dask", extra = ["array"] },
     { name = "numpy" },
     { name = "odc-geo" },
     { name = "rasterio" },
+    { name = "typing-extensions" },
     { name = "xarray" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/99/c6/fd9dbf40aaf94bf3c9712a9ffdd0a791599764c3e4b80b5917aaf6280ec8/odc_loader-0.5.1.tar.gz", hash = "sha256:bf3adf53b10248bbab3bb1fcb043995c12e204dbde4f9a751cd3331b1c6a1212", size = 41616, upload-time = "2025-04-03T00:14:03.126Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/01/97e644a936329a31b551b2e480eb40f6f807da1bd1355f45ca3c77014db3/odc_loader-0.6.4.tar.gz", hash = "sha256:bef95deaa4b46c4c73bb359d3a2beca37fb4300f87bc4b12e7b6d646433fd267", size = 48888, upload-time = "2026-01-14T01:21:03.073Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/48/d45d414b8228325051b0a09f68322ef26717eb9b6517579ae395adf2fbfc/odc_loader-0.5.1-py3-none-any.whl", hash = "sha256:fbe505e2f0e8ac4db2542935bdf5f706e6147817d818073a8a98d3226bd6470f", size = 50717, upload-time = "2025-04-03T00:14:01.687Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/8f/22b0a79e458392e377a9784cc93e1bd6aaa3f908d52969a81e0c56e6b59d/odc_loader-0.6.4-py3-none-any.whl", hash = "sha256:3f936841c253535fdb35fb803579e40e5f438d2fa893596004287143817cfee0", size = 58610, upload-time = "2026-01-14T01:21:01.867Z" },
 ]
 
 [[package]]
 name = "odc-stac"
-version = "0.4.0"
+version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "affine" },
@@ -1796,15 +1795,15 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "xarray" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7f/2e/b5f29cd12f8a5b23f499d7da716cb6d0c55f9542d805111a1e6d92347a31/odc_stac-0.4.0.tar.gz", hash = "sha256:3535767940840e8c3ec2e3dda15ac36e30de0e51624dcc82e1052e19a7dab091", size = 114343, upload-time = "2025-05-01T05:20:51.33Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/3a/7d7ad9deb2fb612bb42f6499ca49b7bdd8850e4d2189b974ca521d2e93aa/odc_stac-0.5.2.tar.gz", hash = "sha256:ab5969805e843be072c3bf2886b383b9a6101ab556d91bfc83377a87455c6028", size = 116539, upload-time = "2026-01-19T05:00:49.409Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/21/05c243c9b563519ae5b7442a73424ad0537c7d312cf8969bdf9d0fa31c00/odc_stac-0.4.0-py3-none-any.whl", hash = "sha256:a76b9d96d7aea53cabcd7ba99b0cf467a6eab6d2ad6a52802af36b5c407c5952", size = 44259, upload-time = "2025-05-01T05:20:49.632Z" },
+    { url = "https://files.pythonhosted.org/packages/01/8a/fd93f13a9b4b688b5ac8c8ec14ed6401db99166b7d55c41c9c96250398d9/odc_stac-0.5.2-py3-none-any.whl", hash = "sha256:acb15b7dd26771fdcdf4f93b1e070e14748fad6d18c572e6710f8ca5d6c78073", size = 43969, upload-time = "2026-01-19T05:00:46.51Z" },
 ]
 
 [[package]]
 name = "odc-stats"
-version = "0.1.dev764+g5feed99d9"
-source = { git = "https://github.com/piksel-ina/odc-stats.git?rev=5feed99d906f3fedcc18691abcc0d301346c9107#5feed99d906f3fedcc18691abcc0d301346c9107" }
+version = "0.1.dev765+gdf63d319f"
+source = { git = "https://github.com/piksel-ina/odc-stats.git?rev=df63d319fd534e29a4f1e27598fa280e387fc027#df63d319fd534e29a4f1e27598fa280e387fc027" }
 dependencies = [
     { name = "ai-edge-litert" },
     { name = "botocore" },
