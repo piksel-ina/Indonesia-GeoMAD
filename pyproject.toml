@@ -23,7 +23,11 @@ dependencies = [
   "boto3",
   "hdstats>=0.2.1",
   "mapclassify>=2.10.0",
-  "scikit-image<0.26"
+  "scikit-image<0.26",
+  "eo-tides",
+  "pyTMD>=2.2.8",
+  "h5py==3.14.0",
+  "bottleneck",
 ]
 
 [project.optional-dependencies]
@@ -37,3 +41,6 @@ notebook = [
 
 [tool.uv]
 prerelease = "allow"
+
+[tool.setuptools.packages.find]
+where = ["src"]

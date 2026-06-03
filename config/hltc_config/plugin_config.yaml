@@ -1,0 +1,42 @@
+# Plugin-specific configuration for hltc
+resampling: nearest
+
+# Cloud filtering configuration
+cloud_filters:
+  'cloud medium probability':
+    - [opening, 2]
+    - [dilation, 5]
+  'cloud high probability':
+    - [opening, 2] 
+    - [dilation, 5]
+  'thin cirrus':
+    - [dilation, 5]
+
+# Band selection
+input_bands:
+#  - coastal
+  - blue
+  - red
+  - green
+  - nir
+  - nir08
+  - rededge1
+  - rededge2
+  - rededge3
+  - swir16
+  - swir22
+
+rgb_bands:
+  - low_red
+  - low_green
+  - low_blue
+
+chunks:
+  'y': 500
+  'x': 500
+
+mask_band: "scl"
+
+tide_model_dir: "/home/jovyan/data/coastlines/tide_models"
+
+tide_model: "FES2022"
