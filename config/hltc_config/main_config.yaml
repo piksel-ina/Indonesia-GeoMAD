@@ -1,7 +1,7 @@
 # Main configuration for odc-stats processing
 product:
-  name: htlc_s2
-  short_name: htlc_s2
+  name: hltc_s2
+  short_name: hltc_s2
   version: 1.0.0
   product_family: geomedian
   region_code_format: "x{x:04d}y{y:04d}"
