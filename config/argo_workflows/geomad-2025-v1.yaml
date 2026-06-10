@@ -41,7 +41,7 @@ spec:
   arguments:
     parameters:
       - name: image-name
-        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/data-production:geomad-v20260204-0813"
+        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260610-1705"
       - name: version
         value: "1.0.0"
       - name: output-bucket

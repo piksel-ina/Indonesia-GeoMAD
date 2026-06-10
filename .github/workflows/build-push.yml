@@ -51,3 +51,16 @@ jobs:
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.date.outputs.tag }}
+
+      - name: Write job summary
+        run: |
+          IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.date.outputs.tag }}"
+          {
+            echo "## Image pushed"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Repository | \`${{ env.ECR_REPOSITORY }}\` |"
+            echo "| Tag | \`${{ steps.date.outputs.tag }}\` |"
+            echo "| Full image | \`${IMAGE}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
