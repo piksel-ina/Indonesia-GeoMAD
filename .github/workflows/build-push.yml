@@ -2,10 +2,13 @@ name: Build and Push (ECR)
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 env:
   AWS_REGION: ap-southeast-3
-  ECR_REPOSITORY: data-production
+  ECR_REPOSITORY: geomad
 
 jobs:
   build-and-push:
@@ -28,9 +31,14 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Generate date tag
+      - name: Generate image tag
         id: date
-        run: echo "tag=geomad-v$(date -u +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v$(date -u +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
