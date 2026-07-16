@@ -23,6 +23,22 @@ This repository supports generation of multiple spectral statistics:
 - **Percentiles** - Spectral percentile statistics
 
 ## Manage Development Environment
+
+### ODC
+To build Docker images and run containerised PostgreSQL/PostGIS and ODC locally, follow [this quickstart](https://github.com/piksel-ina/piksel-core/blob/main/README.md#quick-start) and then in that env run `make index-s2-gm-annual` so the GeoMAD product has datasets. Export these so we can then connect to the local ODC-enabled database:
+```bash
+# Use the secrets you set up here: https://github.com/piksel-ina/piksel-core/blob/main/.env.example
+export ODC_DEFAULT_DB_USERNAME=X
+export ODC_DEFAULT_DB_DATABASE=X
+export ODC_DEFAULT_DB_HOSTNAME=X
+export ODC_DEFAULT_DB_PASSWORD=X
+export ODC_DEFAULT_DB_PORT=X
+export ODC_DEFAULT_INDEX_DRIVER=postgis
+export AWS_PROFILE=X
+```
+
+Now you are ready to run commands such as to create the low resolution mosaic COGs and STAC.
+
 ### Environment Setup with UV
 
 1. **Install System Dependencies**  
@@ -92,3 +108,20 @@ uv sync --extra notebook
 - [Open Data Cube](https://www.opendatacube.org/) community
 - [odc-stats](https://github.com/opendatacube/odc-stats) developers
 - [Digital Earth Australia](https://www.dea.ga.gov.au/) for GeoMAD algorithm development
+
+
+## Low Resolution COGs
+
+For visualisation, we make low resolution mosaic COGs. Here is an example command to do this for the S2 GeoMAD Annual product.
+
+```bash
+uv run src/low_res_mosaic/low_res_mosaic.py \
+  --product s2_geomad_annual \
+  --time-start 2021 \
+  --period P1Y \
+  --bands red,green,blue \
+  --resolution 240 \
+  --s3-output-root s3://piksel-staging-public-data/ \
+  --split-bands \
+  --version 1.0.0
+```

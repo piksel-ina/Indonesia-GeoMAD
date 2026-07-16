@@ -1,0 +1,148 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: create-mosaic
+  namespace: argo-workflows
+
+spec:
+  entrypoint: workflow-entrypoint
+  serviceAccountName: argo-workflows-executor
+
+  podGC:
+    strategy: OnPodSuccess
+
+  ttlStrategy:
+    secondsAfterSuccess: 5000
+    secondsAfterFailure: 5000
+
+  artifactGC:
+    strategy: OnWorkflowDeletion
+    forceFinalizerRemoval: true
+
+  nodeSelector:
+    data-production: r12xlarge # ?
+  tolerations:
+    - key: data-production
+      operator: Equal
+      value: r12xlarge # ?
+      effect: NoSchedule
+
+  podMetadata:
+    annotations:
+      karpenter.sh/do-not-disrupt: "true"
+
+  parallelism: 5
+
+  arguments:
+    parameters:
+      - name: image-name # ?
+        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260610-1705"
+      - name: version
+        value: "1.0.0"
+      - name: output-bucket
+        value: piksel-staging-public-data
+      # TODO: standardise path and product names.
+      - name: output-path
+        value: geomad_s2
+      # Which years are done?
+      - name: years
+        value: '["2015","2016"]'
+      - name: product
+        value: s2_geomad_annual
+      - name: out-product
+        value: geomad_s2_annual_mosaic_240
+      - name: period
+        value: P1Y
+      - name: bands
+        value: red,green,blue
+      - name: resolution
+        value: "240"
+      - name: split-bands
+        value: "true"
+      - name: overwrite
+        value: "false"
+
+  templates:
+    - name: workflow-entrypoint
+      dag:
+        tasks:
+          - name: create-low-res-mosaic-per-year
+            template: create-low-res-mosaic
+            arguments:
+              parameters:
+                - name: time-start
+                  value: "{{item}}"
+            withParam: "{{workflow.parameters.years}}"
+
+    - name: create-low-res-mosaic
+      inputs:
+        parameters:
+          - name: time-start
+
+      container:
+        image: "{{workflow.parameters.image-name}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 64Gi #  TODO: Tune.
+            cpu: 8
+          limits:
+            memory: 64Gi
+            cpu: 8
+
+        env:
+          - name: AWS_DEFAULT_REGION
+            value: "ap-southeast-3"
+          - name: DB_HOSTNAME
+            value: "pg-proxy-service.database.svc.cluster.local"
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: password
+          - name: DB_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_DB_HOSTNAME
+            value: "pg-proxy-service.database.svc.cluster.local"
+          - name: ODC_DEFAULT_DB_PORT
+            value: "6432"
+          - name: ODC_DEFAULT_DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+          - name: ODC_DEFAULT_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: password
+          - name: ODC_DEFAULT_DB_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: odc
+                key: username
+
+        command: ["/entrypoint.sh"]
+        args:
+          - /bin/bash
+          - "-c"
+          - |
+            set -ex
+            python /app/src/low_res_mosaic/low_res_mosaic.py \
+              --product "{{workflow.parameters.product}}" \
+              --out-product "{{workflow.parameters.out-product}}" \
+              --time-start "{{inputs.parameters.time-start}}" \
+              --period "{{workflow.parameters.period}}" \
+              --bands "{{workflow.parameters.bands}}" \
+              --resolution "{{workflow.parameters.resolution}}" \
+              --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
+              $( [ "{{workflow.parameters.split-bands}}" = "true" ] && echo --split-bands ) \
+              $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )

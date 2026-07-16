@@ -25,9 +25,10 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv ${VIRTUAL_ENV}
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
-COPY pyproject.toml /app/
-COPY uv.lock /app/uv.lock
+COPY pyproject.toml uv.lock /app/
+RUN uv sync --active --no-dev --frozen --no-install-project
 
+COPY src /app/src
 RUN uv sync --active --no-dev --frozen
 
 ENV DATACUBE_CONFIG_PATH=/etc/datacube/datacube.conf
