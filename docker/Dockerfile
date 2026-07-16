@@ -1,4 +1,4 @@
-FROM ghcr.io/osgeo/gdal:ubuntu-small-3.12.0
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.13.1
 
 WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
