@@ -120,8 +120,9 @@ uv run src/low_res_mosaic/low_res_mosaic.py \
   --time-start 2021 \
   --period P1Y \
   --bands red,green,blue \
-  --resolution 240 \
+  --resolution 1000 \
   --s3-output-root s3://piksel-staging-public-data/ \
   --split-bands \
-  --version 1.0.0
+  --version 1.0.0 \
+  --overwrite
 ```

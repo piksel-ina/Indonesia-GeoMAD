@@ -82,8 +82,11 @@ def create_low_res_mosaic(
         resolution=(-resolution, resolution),
         dask_chunks={"x": 2048, "y": 2048},
         measurements=bands,
-        # limit=5 # TODO: remove. Just for testing/dev
     )
+
+    datasets = list(dc.find_datasets(product=product, time=time))
+    log.info(f"Found {len(datasets)} datasets for {product}/{version} over {time}")
+
 
     if not split_bands:
         log.info("Creating a single tif file")
@@ -108,7 +111,7 @@ def create_low_res_mosaic(
             asset = pystac.Asset(media_type=pystac.MediaType.COG, href=out_file, roles=["data"])
         
         assets[bands[0]] = asset
-        
+
     else:
         log.info(f"Creating multiple tif files (one per band for bands: {bands})")
 
@@ -134,7 +137,7 @@ def create_low_res_mosaic(
                     exit(1)
 
                 # Aggressively heavy handed, but we get memory leaks otherwise
-                client.restart()
+                client.restart() # TODO: Don't do this on the last iteration. It is not needed.
             else:
                 log.info(f"File exists, and overwrite is False. Not writing {out_file}")
                 # Still describe it in the STAC item — it exists, just wasn't (re)written this run
@@ -174,7 +177,7 @@ def create_low_res_mosaic(
 @click.option("--time-start", type=str, default="2015")
 @click.option("--period", type=str, default="P1Y")
 @click.option("--bands", type=str, default="red,green,blue")
-@click.option("--resolution", type=int, default=240)
+@click.option("--resolution", type=int, default=1000)
 @click.option(
     "--s3-output-root",
     type=str,
@@ -202,12 +205,12 @@ def cli(
 
     An example command is:
 
-        create-mosaic \
+        uv run src/low_res_mosaic/low_res_mosaic.py \
             --product s2_geomad_annual \
             --time-start 2021 \
             --period P1Y \
             --bands red,green,blue \
-            --resolution 240 \
+            --resolution 1000 \
             --s3-output-root s3://piksel-staging-public-data/ \
             --split-bands \
             --version 1.0.0
