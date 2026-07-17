@@ -50,13 +50,13 @@ spec:
       - name: product
         value: s2_geomad_annual
       - name: out-product
-        value: geomad_s2_annual_mosaic_240
+        value: geomad_s2_annual_mosaic_1000
       - name: period
         value: P1Y
       - name: bands
         value: red,green,blue
       - name: resolution
-        value: "240"
+        value: "1000"
       - name: split-bands
         value: "true"
       - name: overwrite
