@@ -41,7 +41,6 @@ def _save_opinionated_cog(
         blocksize=1024,
         overview_resampling="average",
         bigtiff=True,
-        # SPARSE_OK=True,
         stats=True,
     )
 
@@ -82,6 +81,7 @@ def create_low_res_mosaic(
         resolution=(-resolution, resolution),
         dask_chunks={"x": 2048, "y": 2048},
         measurements=bands,
+        # limit=15, # TODO: Remove debugging limit.
     )
 
     datasets = list(dc.find_datasets(product=product, time=time))
@@ -176,8 +176,8 @@ def create_low_res_mosaic(
 @click.option("--version", type=str, default="1.0.0")
 @click.option("--time-start", type=str, default="2015")
 @click.option("--period", type=str, default="P1Y")
-@click.option("--bands", type=str, default="red,green,blue")
-@click.option("--resolution", type=int, default=1000)
+@click.option("--bands", type=str, default="red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT") # rgba
+@click.option("--resolution", type=int, default=120)
 @click.option(
     "--s3-output-root",
     type=str,
@@ -209,8 +209,8 @@ def cli(
             --product s2_geomad_annual \
             --time-start 2021 \
             --period P1Y \
-            --bands red,green,blue \
-            --resolution 1000 \
+            --bands red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT \
+            --resolution 120 \
             --s3-output-root s3://piksel-staging-public-data/ \
             --split-bands \
             --version 1.0.0
@@ -221,6 +221,7 @@ def cli(
     if not len(bands) > 0:
         log.exception("Please select at least one band")
         exit(1)
+    # TODO: Handle rgba COG. It should be created from the mosaic?
 
     if not dc.index.products.get_by_name(product):
         log.exception(f"Product {product} not found")
