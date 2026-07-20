@@ -119,8 +119,8 @@ uv run src/low_res_mosaic/low_res_mosaic.py \
   --product s2_geomad_annual \
   --time-start 2021 \
   --period P1Y \
-  --bands red,green,blue \
-  --resolution 1000 \
+  --bands red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT \
+  --resolution 120 \
   --s3-output-root s3://piksel-staging-public-data/ \
   --split-bands \
   --version 1.0.0 \
