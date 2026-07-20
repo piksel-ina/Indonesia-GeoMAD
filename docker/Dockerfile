@@ -3,9 +3,7 @@ FROM ghcr.io/osgeo/gdal:ubuntu-small-3.13.1
 WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 
-ENV GDAL_DATA=/usr/share/gdal \
-    PROJ_DATA=/usr/local/share/proj \
-    PROJ_LIB=/usr/local/share/proj
+ENV GDAL_DATA=/usr/share/gdal
 
 COPY docker/distributed.yaml /etc/dask/distributed.yaml
 
