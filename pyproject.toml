@@ -34,6 +34,7 @@ dependencies = [
   "odc-algo>=1.0.1,<1.1",
   "odc-cloud>=0.2.5",
   "odc-geo>=0.5.0",
+  "imagecodecs>=2026.6.26",
 ]
 
 [project.optional-dependencies]
