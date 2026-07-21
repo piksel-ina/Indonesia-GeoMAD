@@ -19,13 +19,13 @@ spec:
     strategy: OnWorkflowDeletion
     forceFinalizerRemoval: true
 
-  nodeSelector:
-    data-production: r12xlarge # ?
-  tolerations:
-    - key: data-production
-      operator: Equal
-      value: r12xlarge # ?
-      effect: NoSchedule
+  # nodeSelector:
+  #   data-production: r12xlarge # ?
+  # tolerations:
+  #   - key: data-production
+  #     operator: Equal
+  #     value: r12xlarge # ?
+  #     effect: NoSchedule
 
   podMetadata:
     annotations:
@@ -36,21 +36,21 @@ spec:
   arguments:
     parameters:
       - name: image-name # ?
-        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260610-1705"
+        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260721-1007"
       - name: version
         value: "1.0.0"
       - name: output-bucket
         value: piksel-staging-public-data
-      # TODO: standardise path and product names.
-      - name: output-path
-        value: geomad_s2
-      # Which years are done?
+      # - name: output-path
+      #   value: geomad_s2
       - name: years
-        value: '["2015","2016"]'
+        # value: '["2017","2018","2019","2020","2021","2022","2023","2024","2025"]'
+        value: '["2021"]' # As of 2026-07-20: 2020-2025 completed, 2019 processing, 2017-2018 not started.
       - name: product
         value: s2_geomad_annual
-      - name: out-product
-        value: geomad_s2_annual_mosaic_120
+      # TODO: needed? It is auto.
+      # - name: out-product
+      #   value: geomad_s2_annual_mosaic_120
       - name: period
         value: P1Y
       - name: bands
@@ -60,7 +60,7 @@ spec:
       - name: split-bands
         value: "true"
       - name: overwrite
-        value: "false"
+        value: "true"
 
   templates:
     - name: workflow-entrypoint
@@ -70,25 +70,25 @@ spec:
             template: create-low-res-mosaic
             arguments:
               parameters:
-                - name: time-start
+                - name: year
                   value: "{{item}}"
             withParam: "{{workflow.parameters.years}}"
 
     - name: create-low-res-mosaic
       inputs:
         parameters:
-          - name: time-start
+          - name: year
 
       container:
         image: "{{workflow.parameters.image-name}}"
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 64Gi #  TODO: Tune.
-            cpu: 8
+            memory: 16Gi # TODO: Tune.
+            cpu: 2
           limits:
-            memory: 64Gi
-            cpu: 8
+            memory: 32Gi
+            cpu: 4
 
         env:
           - name: AWS_DEFAULT_REGION
@@ -128,7 +128,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: odc
-                key: username
+                key: username # TODO: Fix username used as db name
 
         command: ["/entrypoint.sh"]
         args:
@@ -138,8 +138,8 @@ spec:
             set -ex
             python /app/src/low_res_mosaic/low_res_mosaic.py \
               --product "{{workflow.parameters.product}}" \
-              --out-product "{{workflow.parameters.out-product}}" \
-              --time-start "{{inputs.parameters.time-start}}" \
+              --version "{{workflow.parameters.version}}" \
+              --time-start "{{inputs.parameters.year}}" \
               --period "{{workflow.parameters.period}}" \
               --bands "{{workflow.parameters.bands}}" \
               --resolution "{{workflow.parameters.resolution}}" \

@@ -35,6 +35,10 @@ def _save_opinionated_cog(
         data_array,
         out_file,
         # TODO: Tune compression:
+        # compression="zstd" # See if this is smaller than deflate (default) # Wei Ji recommends jpeg (fine for just visualisation).
+        # lossy compression is fine for visualisation. loses some data.
+        # smaller files helps if bandwidth is bottleneck.
+        # more compression = slower to read and CPU can be the bottleneck.
         # compression="zstd" # See if this is smaller than deflate (default)
         # level=15, # zstd level, higher = smaller/slower; tune to taste
         # predictor=2,   # horizontal differencing for integer bands — improves DEFLATE/ZSTD ratio on smooth reflectance data with no downside
