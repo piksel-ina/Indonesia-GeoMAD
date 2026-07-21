@@ -31,7 +31,7 @@ spec:
     annotations:
       karpenter.sh/do-not-disrupt: "true"
 
-  parallelism: 100
+  parallelism: 20
 
   arguments:
     parameters:
@@ -84,6 +84,7 @@ spec:
 
           - name: create-rgb-cogs
             template: create-rgb-cog
+            depends: "create-band-cogs.AllSucceeded"
             arguments:
               parameters:
                 - name: year
@@ -97,7 +98,7 @@ spec:
             # since Argo doesn't have a cheap way to gate per-year without a nested DAG.
             # Fine while parallelism is capped and volumes are small; revisit if this becomes
             # a bottleneck (e.g. split into a per-year sub-DAG called via withParam).
-            depends: "create-band-cogs.AllSucceeded && create-rgb-cogs.AllSucceeded"
+            depends: "create-rgb-cogs.AllSucceeded"
             arguments:
               parameters:
                 - name: year
@@ -197,10 +198,10 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 8Gi
+            memory: 2Gi
             cpu: 1
           limits:
-            memory: 24Gi
+            memory: 4Gi
             cpu: 2
         env: *odc-env
         command: ["/entrypoint.sh"]
@@ -248,4 +249,5 @@ spec:
               --period "{{workflow.parameters.period}}" \
               --resolution "{{workflow.parameters.resolution}}" \
               --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
+              --bands "{{workflow.parameters.bands}}" \
               $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )

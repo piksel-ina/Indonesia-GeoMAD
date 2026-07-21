@@ -12,6 +12,8 @@ from odc.geo.cog import save_cog_with_dask
 from odc.aws import s3_client, s3_dump, s3_head_object
 from pystac.asset import Asset
 from rio_stac import create_stac_item
+from rioxarray import open_rasterio
+from xarray import concat
 
 import logging
 
@@ -22,15 +24,9 @@ logging.basicConfig(
 log = logging.getLogger("low_res_mosaic")
 
 
-def _save_opinionated_cog(
-    dataset: Dataset, out_file: str, band: str | None = None, roles: list[str] = ["data"]
-) -> Asset:
-    data_array: DataArray
-    if band is not None:
-        data_array = dataset[band].squeeze("time")
-    else:
-        data_array = dataset.squeeze("time").to_stacked_array("bands", ["x", "y"])
-
+def _write_cog(data_array: DataArray, out_file: str, roles: list[str] = ["data"]) -> Asset:
+    """Write a DataArray to a COG. This is the shared core — callers are responsible for
+    handing it an array that's already in the right shape (no time dim, bands as needed)."""
     # Use default compression because we want lossless.
     cog = save_cog_with_dask(
         data_array,
@@ -40,10 +36,23 @@ def _save_opinionated_cog(
         bigtiff=True,
         stats=True,
     )
-
     cog.compute()
 
     return pystac.Asset(media_type=pystac.MediaType.COG, href=out_file, roles=roles)
+
+
+def _save_opinionated_cog(
+    dataset: Dataset, out_file: str, band: str | None = None, roles: list[str] = ["data"]
+) -> Asset:
+    """Shape a datacube-loaded Dataset (with a time dim) into a single-band or stacked
+    DataArray, then write it as a COG."""
+    data_array: DataArray
+    if band is not None:
+        data_array = dataset[band].squeeze("time")
+    else:
+        data_array = dataset.squeeze("time").to_stacked_array("bands", ["x", "y"])
+
+    return _write_cog(data_array, out_file, roles)
 
 
 def _get_path(s3_output_root: str, version: str, out_product: str, time_str: str, ext: str, band: str | None = None):
@@ -86,7 +95,7 @@ def create_band_cog(
     resolution: int,
     overwrite: bool,
 ):
-    """Load a single band and write it out as its own COG. This is the unit of work that gets
+    """Load a single band from datacube and write it out as its own COG. This is the unit of work that gets
     fanned out in parallel, one invocation per band."""
     log.info(f"Creating band COG for {product}/{version}/{band} over {time}")
 
@@ -106,7 +115,6 @@ def create_band_cog(
         measurements=[band],
     )
 
-
     # Just a count for information.
     datasets = list(dc.find_datasets(product=product, time=time))
     log.info(f"Found {len(datasets)} datasets for {product}/{version} over {time}")
@@ -124,18 +132,15 @@ def create_band_cog(
 
 
 def create_rgb_cog(
-    dc: Datacube,
-    product: str,
     out_product: str,
     version: str,
-    time: Tuple[str, str],
     time_str: str,
     s3_output_root: str,
-    resolution: int,
     overwrite: bool,
 ):
-    """Load red/green/blue and write the RGB visual COG."""
-    log.info(f"Creating RGB COG for {product}/{version} over {time}")
+    """Build the RGB COG by reading back the already-written red/green/blue band COGs and
+    stacking them, rather than re-loading from the datacube."""
+    log.info(f"Creating RGB COG for {out_product}/{version} over {time_str}")
 
     rgb_out_file = _get_path(s3_output_root, version, out_product, time_str, "tif", band="rgb")
     exists = s3_head_object(rgb_out_file) is not None
@@ -145,23 +150,22 @@ def create_rgb_cog(
 
     start_local_dask()
 
-    data: Dataset = dc.load(
-        product=product,
-        time=time,
-        resolution=(-resolution, resolution),
-        dask_chunks={"x": 2048, "y": 2048},
-        measurements=["red", "green", "blue"],
-    )
+    band_files = {
+        band: _get_path(s3_output_root, version, out_product, time_str, "tif", band=band)
+        for band in ("red", "green", "blue")
+    }
+    for band, path in band_files.items():
+        if s3_head_object(path) is None:
+            log.exception(f"Required band COG missing for RGB: {path}")
+            exit(1)
 
-    # Just a count for information.
-    datasets = list(dc.find_datasets(product=product, time=time))
-    log.info(f"Found {len(datasets)} datasets for {product}/{version} over {time}")
+    arrays = [
+        open_rasterio(path, chunks={"x": 2048, "y": 2048}).squeeze("band", drop=True).assign_coords(band=band)
+        for band, path in band_files.items()
+    ]
+    stacked = concat(arrays, dim="band")
 
-    rgb_asset = _save_opinionated_cog(
-        data[["red", "green", "blue"]],
-        rgb_out_file,
-        roles=["visual"],
-    )
+    rgb_asset = _write_cog(stacked, rgb_out_file, roles=["visual"])
     log.info(f"Finished writing: {rgb_asset.href}")
 
 
@@ -251,7 +255,7 @@ def cli():
 
         uv run src/low_res_mosaic/low_res_mosaic.py stac \\
             --product s2_geomad_annual --time-start 2025 --period P1Y \\
-            --bands red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT \\
+            --bands '["red","green","blue","rededge1","rededge2","rededge3","nir","nir08","swir16","swir22","BCMAD","EMAD","SMAD","COUNT"]' \\
             --resolution 120 --s3-output-root s3://piksel-staging-public-data/ --version 1.0.0
     """
     pass
@@ -295,20 +299,32 @@ def rgb_cmd(product, out_product, version, time_start, period, resolution, s3_ou
         out_product = f"{product}_{resolution}"
 
     create_rgb_cog(
-        dc, product, out_product, version, time, time_str,
-        s3_output_root.rstrip("/"), resolution, overwrite,
+        out_product, version, time_str,
+        s3_output_root.rstrip("/"), overwrite,
     )
 
 
 @cli.command("stac")
 @_common_options
-@click.option("--bands", type=str, required=True, help="Comma separated list of bands included in the mosaic.", default="red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT")
+@click.option(
+    "--bands",
+    type=str,
+    required=True,
+    help="JSON list of bands included in the mosaic, e.g. '[\"red\",\"green\",\"blue\"]'.",
+    default='["red","green","blue","rededge1","rededge2","rededge3","nir","nir08","swir16","swir22","BCMAD","EMAD","SMAD","COUNT"]',
+)
 def stac_cmd(product, out_product, version, time_start, period, resolution, s3_output_root, overwrite, bands):
     """Assemble and write the STAC item for a mosaic."""
-    bands = bands.split(",")
+    try:
+        bands = json.loads(bands)
+    except json.JSONDecodeError:
+        log.exception("Please provide --bands as a JSON list of strings, e.g. '[\"red\",\"green\"]'")
+        exit(1)
+
     if not len(bands) > 0:
         log.exception("Please select at least one band")
         exit(1)
+
 
     time, time_str = _time_bounds(time_start, period)
 
