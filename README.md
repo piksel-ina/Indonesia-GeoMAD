@@ -112,17 +112,4 @@ uv sync --extra notebook
 
 ## Low Resolution COGs
 
-For visualisation, we make low resolution mosaic COGs. Here is an example command to do this for the S2 GeoMAD Annual product.
-
-```bash
-uv run src/low_res_mosaic/low_res_mosaic.py \
-  --product s2_geomad_annual \
-  --time-start 2021 \
-  --period P1Y \
-  --bands red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT \
-  --resolution 120 \
-  --s3-output-root s3://piksel-staging-public-data/ \
-  --split-bands \
-  --version 1.0.0 \
-  --overwrite
-```
+For visualisation, we make low resolution mosaic COGs of the S2 GeoMAD Annual product.

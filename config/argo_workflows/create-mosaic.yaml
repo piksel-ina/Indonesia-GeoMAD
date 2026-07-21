@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: create-mosaic
+  name: create-mosaic-parallel
   namespace: argo-workflows
 
 spec:
@@ -31,7 +31,7 @@ spec:
     annotations:
       karpenter.sh/do-not-disrupt: "true"
 
-  parallelism: 5
+  parallelism: 100
 
   arguments:
     parameters:
@@ -44,8 +44,10 @@ spec:
       # - name: output-path
       #   value: geomad_s2
       - name: years
+      # As of 2026-07-20: 2020-2025 completed, 2019 processing, 2017-2018 not started.
+      # And 2022-2025 have been indexed as ODC datasets.
         # value: '["2017","2018","2019","2020","2021","2022","2023","2024","2025"]'
-        value: '["2021"]' # As of 2026-07-20: 2020-2025 completed, 2019 processing, 2017-2018 not started.
+        value: '["2025"]'
       - name: product
         value: s2_geomad_annual
       # TODO: needed? It is auto.
@@ -54,43 +56,83 @@ spec:
       - name: period
         value: P1Y
       - name: bands
-        value: red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT
+        value: '["red","green","blue","rededge1","rededge2","rededge3","nir","nir08","swir16","swir22","BCMAD","EMAD","SMAD","COUNT"]'
       - name: resolution
         value: "120"
-      - name: split-bands
-        value: "true"
       - name: overwrite
-        value: "true"
+        value: "false"
 
   templates:
     - name: workflow-entrypoint
       dag:
         tasks:
-          - name: create-low-res-mosaic-per-year
-            template: create-low-res-mosaic
+          - name: generate-year-band-matrix
+            template: year-band-matrix
+
+
+          - name: create-band-cogs
+            template: create-band-cog
+            depends: "generate-year-band-matrix.Succeeded"
+            arguments:
+              parameters:
+                - name: year
+                  value: "{{item.year}}"
+                - name: band
+                  value: "{{item.band}}"
+            withParam: "{{tasks.generate-year-band-matrix.outputs.result}}"
+
+
+          - name: create-rgb-cogs
+            template: create-rgb-cog
             arguments:
               parameters:
                 - name: year
                   value: "{{item}}"
             withParam: "{{workflow.parameters.years}}"
 
-    - name: create-low-res-mosaic
+
+          - name: write-stac-items
+            template: create-stac-item
+            # TODO: this waits for ALL years' band cogs before writing ANY year's STAC item,
+            # since Argo doesn't have a cheap way to gate per-year without a nested DAG.
+            # Fine while parallelism is capped and volumes are small; revisit if this becomes
+            # a bottleneck (e.g. split into a per-year sub-DAG called via withParam).
+            depends: "create-band-cogs.AllSucceeded && create-rgb-cogs.AllSucceeded"
+            arguments:
+              parameters:
+                - name: year
+                  value: "{{item}}"
+            withParam: "{{workflow.parameters.years}}"
+
+
+    - name: year-band-matrix
+      script:
+        image: python:3.12-slim
+        command: [python]
+        source: |
+          import json
+          years = json.loads('{{workflow.parameters.years}}')
+          bands = json.loads('{{workflow.parameters.bands}}')
+          matrix = [{"year": year, "band": band} for year in years for band in bands]
+          print(json.dumps(matrix))
+
+
+    - name: create-band-cog
       inputs:
         parameters:
           - name: year
-
+          - name: band
       container:
         image: "{{workflow.parameters.image-name}}"
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 16Gi # TODO: Tune.
-            cpu: 2
+            memory: 8Gi # TODO: Tune. 4Gi limit OOMKilled for all bands. nir, redesge2, rededge3 killed at 16Gi limit. 2 MAD bands killed at 24Gi.
+            cpu: 1
           limits:
             memory: 32Gi
             cpu: 4
-
-        env:
+        env: &odc-env
           - name: AWS_DEFAULT_REGION
             value: "ap-southeast-3"
           - name: DB_HOSTNAME
@@ -129,20 +171,81 @@ spec:
               secretKeyRef:
                 name: odc
                 key: username # TODO: Fix username used as db name
-
         command: ["/entrypoint.sh"]
         args:
           - /bin/bash
           - "-c"
           - |
             set -ex
-            python /app/src/low_res_mosaic/low_res_mosaic.py \
+            python /app/src/low_res_mosaic/low_res_mosaic.py band \
               --product "{{workflow.parameters.product}}" \
               --version "{{workflow.parameters.version}}" \
               --time-start "{{inputs.parameters.year}}" \
               --period "{{workflow.parameters.period}}" \
-              --bands "{{workflow.parameters.bands}}" \
+              --band "{{inputs.parameters.band}}" \
               --resolution "{{workflow.parameters.resolution}}" \
               --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
-              $( [ "{{workflow.parameters.split-bands}}" = "true" ] && echo --split-bands ) \
+              $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )
+
+
+    - name: create-rgb-cog
+      inputs:
+        parameters:
+          - name: year
+      container:
+        image: "{{workflow.parameters.image-name}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 8Gi
+            cpu: 1
+          limits:
+            memory: 24Gi
+            cpu: 2
+        env: *odc-env
+        command: ["/entrypoint.sh"]
+        args:
+          - /bin/bash
+          - "-c"
+          - |
+            set -ex
+            python /app/src/low_res_mosaic/low_res_mosaic.py rgb \
+              --product "{{workflow.parameters.product}}" \
+              --version "{{workflow.parameters.version}}" \
+              --time-start "{{inputs.parameters.year}}" \
+              --period "{{workflow.parameters.period}}" \
+              --resolution "{{workflow.parameters.resolution}}" \
+              --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
+              $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )
+
+
+    - name: create-stac-item
+      inputs:
+        parameters:
+          - name: year
+      container:
+        image: "{{workflow.parameters.image-name}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 1
+          limits:
+            memory: 4Gi
+            cpu: 1
+
+        env: *odc-env
+        command: ["/entrypoint.sh"]
+        args:
+          - /bin/bash
+          - "-c"
+          - |
+            set -ex
+            python /app/src/low_res_mosaic/low_res_mosaic.py stac \
+              --product "{{workflow.parameters.product}}" \
+              --version "{{workflow.parameters.version}}" \
+              --time-start "{{inputs.parameters.year}}" \
+              --period "{{workflow.parameters.period}}" \
+              --resolution "{{workflow.parameters.resolution}}" \
+              --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
               $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )
