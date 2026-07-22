@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: create-mosaic
+  name: create-mosaic-parallel
   namespace: argo-workflows
 
 spec:
@@ -20,45 +20,45 @@ spec:
     forceFinalizerRemoval: true
 
   nodeSelector:
-    data-production: r12xlarge # ?
+    data-production: r8xlarge
   tolerations:
     - key: data-production
       operator: Equal
-      value: r12xlarge # ?
+      value: r8xlarge
       effect: NoSchedule
 
   podMetadata:
     annotations:
       karpenter.sh/do-not-disrupt: "true"
 
-  parallelism: 5
+  parallelism: 20
 
   arguments:
     parameters:
       - name: image-name # ?
-        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260610-1705"
+        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260721-1007"
       - name: version
         value: "1.0.0"
       - name: output-bucket
         value: piksel-staging-public-data
-      # TODO: standardise path and product names.
-      - name: output-path
-        value: geomad_s2
-      # Which years are done?
+      # - name: output-path
+      #   value: geomad_s2
       - name: years
-        value: '["2015","2016"]'
+      # As of 2026-07-20: 2020-2025 completed, 2019 processing, 2017-2018 not started.
+      # And 2022-2025 have been indexed as ODC datasets.
+        # value: '["2017","2018","2019","2020","2021","2022","2023","2024","2025"]'
+        value: '["2025"]'
       - name: product
         value: s2_geomad_annual
-      - name: out-product
-        value: geomad_s2_annual_mosaic_120
+      # TODO: needed? It is auto.
+      # - name: out-product
+      #   value: geomad_s2_annual_mosaic_120
       - name: period
         value: P1Y
       - name: bands
-        value: red,green,blue,rededge1,rededge2,rededge3,nir,nir08,swir16,swir22,BCMAD,EMAD,SMAD,COUNT
+        value: '["red","green","blue","rededge1","rededge2","rededge3","nir","nir08","swir16","swir22","BCMAD","EMAD","SMAD","COUNT"]'
       - name: resolution
         value: "120"
-      - name: split-bands
-        value: "true"
       - name: overwrite
         value: "false"
 
@@ -66,31 +66,74 @@ spec:
     - name: workflow-entrypoint
       dag:
         tasks:
-          - name: create-low-res-mosaic-per-year
-            template: create-low-res-mosaic
+          - name: generate-year-band-matrix
+            template: year-band-matrix
+
+
+          - name: create-band-cogs
+            template: create-band-cog
+            depends: "generate-year-band-matrix.Succeeded"
             arguments:
               parameters:
-                - name: time-start
+                - name: year
+                  value: "{{item.year}}"
+                - name: band
+                  value: "{{item.band}}"
+            withParam: "{{tasks.generate-year-band-matrix.outputs.result}}"
+
+
+          - name: create-rgb-cogs
+            template: create-rgb-cog
+            depends: "create-band-cogs.AllSucceeded"
+            arguments:
+              parameters:
+                - name: year
                   value: "{{item}}"
             withParam: "{{workflow.parameters.years}}"
 
-    - name: create-low-res-mosaic
+
+          - name: write-stac-items
+            template: create-stac-item
+            # TODO: this waits for ALL years' band cogs before writing ANY year's STAC item,
+            # since Argo doesn't have a cheap way to gate per-year without a nested DAG.
+            # Fine while parallelism is capped and volumes are small; revisit if this becomes
+            # a bottleneck (e.g. split into a per-year sub-DAG called via withParam).
+            depends: "create-rgb-cogs.AllSucceeded"
+            arguments:
+              parameters:
+                - name: year
+                  value: "{{item}}"
+            withParam: "{{workflow.parameters.years}}"
+
+
+    - name: year-band-matrix
+      script:
+        image: python:3.12-slim
+        command: [python]
+        source: |
+          import json
+          years = json.loads('{{workflow.parameters.years}}')
+          bands = json.loads('{{workflow.parameters.bands}}')
+          matrix = [{"year": year, "band": band} for year in years for band in bands]
+          print(json.dumps(matrix))
+
+
+    - name: create-band-cog
       inputs:
         parameters:
-          - name: time-start
-
+          - name: year
+          - name: band
       container:
         image: "{{workflow.parameters.image-name}}"
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 64Gi #  TODO: Tune.
-            cpu: 8
+            memory: 30Gi
+            cpu: 3
           limits:
-            memory: 64Gi
-            cpu: 8
-
-        env:
+            memory: 32Gi
+            cpu: 4
+        env: &odc-env
           - name: AWS_DEFAULT_REGION
             value: "ap-southeast-3"
           - name: DB_HOSTNAME
@@ -128,21 +171,83 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: odc
-                key: username
-
+                key: username # TODO: Fix username used as db name
         command: ["/entrypoint.sh"]
         args:
           - /bin/bash
           - "-c"
           - |
             set -ex
-            python /app/src/low_res_mosaic/low_res_mosaic.py \
+            python /app/src/low_res_mosaic/low_res_mosaic.py band \
               --product "{{workflow.parameters.product}}" \
-              --out-product "{{workflow.parameters.out-product}}" \
-              --time-start "{{inputs.parameters.time-start}}" \
+              --version "{{workflow.parameters.version}}" \
+              --time-start "{{inputs.parameters.year}}" \
               --period "{{workflow.parameters.period}}" \
-              --bands "{{workflow.parameters.bands}}" \
+              --band "{{inputs.parameters.band}}" \
               --resolution "{{workflow.parameters.resolution}}" \
               --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
-              $( [ "{{workflow.parameters.split-bands}}" = "true" ] && echo --split-bands ) \
+              $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )
+
+
+    - name: create-rgb-cog
+      inputs:
+        parameters:
+          - name: year
+      container:
+        image: "{{workflow.parameters.image-name}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 1
+          limits:
+            memory: 4Gi
+            cpu: 2
+        env: *odc-env
+        command: ["/entrypoint.sh"]
+        args:
+          - /bin/bash
+          - "-c"
+          - |
+            set -ex
+            python /app/src/low_res_mosaic/low_res_mosaic.py rgb \
+              --product "{{workflow.parameters.product}}" \
+              --version "{{workflow.parameters.version}}" \
+              --time-start "{{inputs.parameters.year}}" \
+              --period "{{workflow.parameters.period}}" \
+              --resolution "{{workflow.parameters.resolution}}" \
+              --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
+              $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )
+
+
+    - name: create-stac-item
+      inputs:
+        parameters:
+          - name: year
+      container:
+        image: "{{workflow.parameters.image-name}}"
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 1
+          limits:
+            memory: 4Gi
+            cpu: 1
+
+        env: *odc-env
+        command: ["/entrypoint.sh"]
+        args:
+          - /bin/bash
+          - "-c"
+          - |
+            set -ex
+            python /app/src/low_res_mosaic/low_res_mosaic.py stac \
+              --product "{{workflow.parameters.product}}" \
+              --version "{{workflow.parameters.version}}" \
+              --time-start "{{inputs.parameters.year}}" \
+              --period "{{workflow.parameters.period}}" \
+              --resolution "{{workflow.parameters.resolution}}" \
+              --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
+              --bands "{{workflow.parameters.bands}}" \
               $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )

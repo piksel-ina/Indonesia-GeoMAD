@@ -185,7 +185,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: odc
-                key: username
+                key: username # TODO: Fix username used as db name
 
         command: ["/entrypoint.sh"]
         args:
