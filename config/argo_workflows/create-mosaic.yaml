@@ -36,7 +36,7 @@ spec:
   arguments:
     parameters:
       - name: image-name # ?
-        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260721-1007"
+        value: "686410905891.dkr.ecr.ap-southeast-3.amazonaws.com/geomad:v20260722-1417"
       - name: version
         value: "1.0.0"
       - name: output-bucket
@@ -84,7 +84,7 @@ spec:
 
           - name: create-rgb-cogs
             template: create-rgb-cog
-            depends: "create-band-cogs.AllSucceeded"
+            depends: "create-band-cogs.Succeeded"
             arguments:
               parameters:
                 - name: year
@@ -98,7 +98,7 @@ spec:
             # since Argo doesn't have a cheap way to gate per-year without a nested DAG.
             # Fine while parallelism is capped and volumes are small; revisit if this becomes
             # a bottleneck (e.g. split into a per-year sub-DAG called via withParam).
-            depends: "create-rgb-cogs.AllSucceeded"
+            depends: "create-rgb-cogs.Succeeded"
             arguments:
               parameters:
                 - name: year
@@ -249,5 +249,5 @@ spec:
               --period "{{workflow.parameters.period}}" \
               --resolution "{{workflow.parameters.resolution}}" \
               --s3-output-root "s3://{{workflow.parameters.output-bucket}}/" \
-              --bands "{{workflow.parameters.bands}}" \
+              --bands '{{workflow.parameters.bands}}' \
               $( [ "{{workflow.parameters.overwrite}}" = "true" ] && echo --overwrite )
