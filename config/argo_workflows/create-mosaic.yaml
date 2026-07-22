@@ -19,13 +19,13 @@ spec:
     strategy: OnWorkflowDeletion
     forceFinalizerRemoval: true
 
-  # nodeSelector:
-  #   data-production: r12xlarge # ?
-  # tolerations:
-  #   - key: data-production
-  #     operator: Equal
-  #     value: r12xlarge # ?
-  #     effect: NoSchedule
+  nodeSelector:
+    data-production: r8xlarge
+  tolerations:
+    - key: data-production
+      operator: Equal
+      value: r8xlarge
+      effect: NoSchedule
 
   podMetadata:
     annotations:
@@ -128,8 +128,8 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           requests:
-            memory: 8Gi # TODO: Tune. 4Gi limit OOMKilled for all bands. nir, redesge2, rededge3 killed at 16Gi limit. 2 MAD bands killed at 24Gi.
-            cpu: 1
+            memory: 30Gi
+            cpu: 3
           limits:
             memory: 32Gi
             cpu: 4
