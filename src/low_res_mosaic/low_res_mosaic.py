@@ -105,7 +105,7 @@ def create_band_cog(
         log.info(f"File exists, and overwrite is False. Not writing {out_file}")
         return pystac.Asset(media_type=pystac.MediaType.COG, href=out_file, roles=["data"])
 
-    start_local_dask()
+    client = start_local_dask()
 
     data: Dataset = dc.load(
         product=product,
@@ -127,6 +127,8 @@ def create_band_cog(
             "Failed to create COG, please check that you only have one timestep in the period."
         )
         exit(1)
+    finally:
+        client.close()
 
     log.info(f"Finished writing: {asset.href}")
 
@@ -148,7 +150,7 @@ def create_rgb_cog(
         log.info(f"RGB file exists, and overwrite is False. Not writing {rgb_out_file}")
         return pystac.Asset(media_type=pystac.MediaType.COG, href=rgb_out_file, roles=["visual"])
 
-    start_local_dask()
+    client = start_local_dask()
 
     band_files = {
         band: _get_path(s3_output_root, version, out_product, time_str, "tif", band=band)
@@ -167,6 +169,7 @@ def create_rgb_cog(
 
     rgb_asset = _write_cog(stacked, rgb_out_file, roles=["visual"])
     log.info(f"Finished writing: {rgb_asset.href}")
+    client.close()
 
 
 def create_stac_item_for_mosaic(
